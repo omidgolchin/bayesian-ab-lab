@@ -47,14 +47,23 @@
     series.forEach(function (s) { s.points.forEach(function (p) { xs.push(p[0]); ys.push(p[1]); }); });
     var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
     var y0 = Math.min(0, Math.min.apply(null, ys)), y1 = Math.max.apply(null, ys) * 1.08 || 1;
-    var padL = 44, padB = 22, padT = 8, padR = 8;
+    var padL = opts.yTitle ? 62 : 44, padB = 22, padT = 8, padR = 8;
     function X(v) { return padL + (v - x0) / (x1 - x0) * (W - padL - padR); }
     function Y(v) { return H - padB - (v - y0) / (y1 - y0) * (H - padB - padT); }
     ctx.strokeStyle = "#d9dee6"; ctx.fillStyle = "#5b6572"; ctx.font = "11px sans-serif";
     for (var i = 0; i <= 4; i++) {
       var yv = y0 + (y1 - y0) * i / 4, yy = Y(yv);
       ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke();
-      ctx.fillText(yv.toFixed(opts.yDigits == null ? 2 : opts.yDigits), 4, yy + 3);
+      var tick = yv.toFixed(opts.yDigits == null ? 2 : opts.yDigits);
+      ctx.fillText(tick, padL - ctx.measureText(tick).width - 5, yy + 3);
+    }
+    if (opts.yTitle) {
+      ctx.save();
+      ctx.translate(13, (padT + H - padB) / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = "center";
+      ctx.fillText(opts.yTitle, 0, 0);
+      ctx.restore();
     }
     series.forEach(function (s) {
       ctx.strokeStyle = s.color; ctx.fillStyle = s.color; ctx.lineWidth = 1.8;
@@ -62,9 +71,20 @@
       ctx.beginPath();
       s.points.forEach(function (p, j) { j ? ctx.lineTo(X(p[0]), Y(p[1])) : ctx.moveTo(X(p[0]), Y(p[1])); });
       ctx.stroke(); ctx.setLineDash([]);
-      var last = s.points[s.points.length - 1];
+      // A filled curve (a density) runs along zero at the right edge, so an
+      // end label lands there as a stray mark; label it at its peak instead.
+      // Plain lines keep the end label.
+      var anchor = s.points[s.points.length - 1];
+      if (s.fill) {
+        for (var k = 0; k < s.points.length; k++) {
+          if (s.points[k][1] > anchor[1]) anchor = s.points[k];
+        }
+      }
       var tw = ctx.measureText(s.label).width;
-      ctx.fillText(s.label, Math.max(padL, Math.min(X(last[0]) - tw - 2, W - padR - tw)), Y(last[1]) - 6);
+      var lx = s.fill
+        ? Math.max(padL, Math.min(X(anchor[0]) - tw / 2, W - padR - tw))
+        : Math.max(padL, Math.min(X(anchor[0]) - tw - 2, W - padR - tw));
+      ctx.fillText(s.label, lx, Y(anchor[1]) - 6);
     });
   }
 
@@ -122,7 +142,7 @@
     lineChart(fresh, [
       { label: "A", color: A_COLOR, points: ptsA, fill: true },
       { label: "B", color: B_COLOR, points: ptsB, fill: true }
-    ], { yDigits: 0 });
+    ], { yTitle: "density", yDigits: 0 });
   }
   Object.values(els).forEach(function (el) { el.addEventListener("input", runCalc); });
   document.querySelectorAll("[data-preset]").forEach(function (btn) {

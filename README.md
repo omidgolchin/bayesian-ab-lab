@@ -17,6 +17,8 @@ the peeking analysis follows the repeated-significance-testing
 literature back to Armitage, McPherson & Rowe (1969). The point of the
 lab is the failure modes.
 
+![The peeking simulator: as the number of looks grows toward 40, the classic false-positive rate climbs from 4.5% to 29.1%, and the Bayesian rule reaches 85.0%](docs/hero.gif)
+
 ![The playground](docs/screenshots/playground-desktop.png)
 
 ## The four parts

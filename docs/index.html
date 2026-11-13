@@ -5,207 +5,174 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bayesian A/B Lab — read a test two ways, and see what peeking does</title>
 <meta name="description" content="A learner's lab for A/B tests: a classic-vs-Bayesian calculator, a peeking simulator, the Cookie Cats test read both ways, and a check of whether an LLM reads A/B results correctly.">
+<script src="kit-theme.js"></script>
+<link rel="stylesheet" href="kit.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-  :root {
-    --ink: #1c2430; --muted: #5b6572; --line: #d9dee6; --bg: #f7f8fa;
-    --card: #ffffff; --a: #2563eb; --b: #d97706; --bad: #b91c1c;
-    --good: #15803d; --radius: 10px;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-         color: var(--ink); background: var(--bg); line-height: 1.5; }
-  header { background: var(--card); border-bottom: 1px solid var(--line); }
-  .wrap { max-width: 1020px; margin: 0 auto; padding: 0 16px; }
-  header .wrap { padding-top: 22px; padding-bottom: 14px; }
-  h1 { font-size: 26px; margin: 0 0 6px; }
-  .lede { color: var(--muted); max-width: 68ch; margin: 0; }
-  nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 14px; }
-  nav.tabs button { border: 1px solid var(--line); background: var(--bg); color: var(--ink);
-    padding: 7px 13px; border-radius: 999px; cursor: pointer; font-size: 14px; }
-  nav.tabs button.active { background: var(--ink); color: #fff; border-color: var(--ink); }
-  main .wrap { padding-top: 18px; padding-bottom: 30px; }
+  /* Tool-specific styles only (things the kit does not have): tab
+     panels, the calculator's input grid, and the series-2 callout
+     variant for the Bayesian sentence. Everything else is kit.css. */
   section.tab { display: none; }
   section.tab.active { display: block; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 16px; margin-bottom: 14px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
-  h2 { font-size: 19px; margin: 4px 0 8px; }
-  h3 { font-size: 15px; margin: 0 0 6px; }
-  .muted { color: var(--muted); }
-  .small { font-size: 13px; }
-  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 2px; }
-  input[type=number] { width: 100%; padding: 7px 9px; border: 1px solid var(--line);
-    border-radius: 6px; font-size: 15px; }
-  .inputs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .inputs { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); }
+  .inputs label { display: block; color: var(--muted); margin-bottom: 2px; }
+  .inputs input { width: 100%; }
   @media (max-width: 760px) { .inputs { grid-template-columns: repeat(2, 1fr); } }
-  .presets { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 4px; }
-  .presets button, .btn { border: 1px solid var(--line); background: var(--bg);
-    padding: 6px 11px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-  .btn.primary { background: var(--a); color: #fff; border-color: var(--a); }
-  table { border-collapse: collapse; width: 100%; font-size: 14px; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
-  th { color: var(--muted); font-weight: 600; }
-  .num { font-variant-numeric: tabular-nums; }
-  .verdict { font-weight: 700; }
-  .sentence { background: var(--bg); border-left: 3px solid var(--a); padding: 9px 12px;
-    border-radius: 0 6px 6px 0; margin: 10px 0 0; }
-  .sentence.bayes { border-left-color: var(--b); }
-  canvas.chart { width: 100%; height: 260px; }
-  .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; }
-  .honest { border-left: 3px solid var(--bad); background: #fdf3f3; padding: 9px 12px; border-radius: 0 6px 6px 0; }
-  .fix { border-left: 3px solid var(--good); background: #f2f9f3; padding: 9px 12px; border-radius: 0 6px 6px 0; }
-  footer { border-top: 1px solid var(--line); background: var(--card); }
-  footer .wrap { padding-top: 14px; padding-bottom: 22px; }
-  .kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 8px 0; }
-  @media (max-width: 760px) { .kpi { grid-template-columns: 1fr; } }
-  .kpi div { background: var(--bg); border-radius: 8px; padding: 10px 12px; }
-  .kpi b { display: block; font-size: 20px; }
-  .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--bg);
-    border: 1px solid var(--line); color: var(--muted); }
+  .callout--b { border-left-color: var(--series-2); }
 </style>
 </head>
 <body>
-<header>
-  <div class="wrap">
-    <h1>Bayesian A/B Lab</h1>
-    <p class="lede">I built this to understand how to read an A/B test two ways — the classic
-      significance test and the Bayesian read — and to check where each one misleads:
-      what peeking does to both, and whether a language model reads results correctly
-      when it answers from judgement versus when it writes the code.</p>
-    <nav class="tabs" id="tabs">
-      <button data-tab="calc" class="active">Calculator</button>
-      <button data-tab="cookie">Cookie Cats, both ways</button>
-      <button data-tab="peek">Peeking simulator</button>
-      <button data-tab="thompson">Adaptive allocation</button>
-      <button data-tab="llm">LLM check</button>
-    </nav>
-  </div>
-</header>
 <main>
-  <div class="wrap">
+  <header class="kit-header">
+    <div class="kit-header-top">
+      <p class="kit-kicker">Omid Golchin · learning tools</p>
+      <button class="kit-theme-toggle" type="button" data-kit-theme-toggle
+        aria-label="Toggle light/dark mode">◐ Theme</button>
+    </div>
+    <h1>Bayesian A/B Lab</h1>
+    <p class="kit-tagline">A learner's lab for reading an A/B test two ways —
+      the classic significance test and the Bayesian read — and for checking
+      where each one misleads: what peeking does to both, and whether a
+      language model reads results correctly.</p>
+  </header>
 
-    <section class="tab active" id="tab-calc">
+  <nav class="tabs" id="tabs">
+    <button data-tab="calc" class="active">Calculator</button>
+    <button data-tab="cookie">Cookie Cats, both ways</button>
+    <button data-tab="peek">Peeking simulator</button>
+    <button data-tab="thompson">Adaptive allocation</button>
+    <button data-tab="llm">LLM check</button>
+  </nav>
+
+  <section class="tab active" id="tab-calc">
+    <div class="card">
+      <h2>The same numbers, two reads</h2>
+      <div class="inputs">
+        <div><label for="na">A visitors</label><input type="number" id="na" value="44700" min="1"></div>
+        <div><label for="xa">A conversions</label><input type="number" id="xa" value="20034" min="0"></div>
+        <div><label for="nb">B visitors</label><input type="number" id="nb" value="45489" min="1"></div>
+        <div><label for="xb">B conversions</label><input type="number" id="xb" value="20119" min="0"></div>
+        <div><label for="pa">Prior α (both arms)</label><input type="number" id="pa" value="1" min="0.1" step="0.5"></div>
+        <div><label for="pb">Prior β (both arms)</label><input type="number" id="pb" value="1" min="0.1" step="0.5"></div>
+      </div>
+      <div class="presets">
+        <span class="small muted" style="align-self:center">Try:</span>
+        <button data-preset="cookie1">Cookie Cats · 1-day retention</button>
+        <button data-preset="cookie7">Cookie Cats · 7-day retention</button>
+        <button data-preset="check">Check case · 10 vs 20 of 100</button>
+        <button data-preset="trap">Small-sample trap · 6/60 vs 11/58</button>
+      </div>
+      <p class="small muted">Defaults are the Cookie Cats 1-day retention counts. Priors are
+        Beta(α, β) on each rate; (1, 1) is flat. The sentences are written by rules from the
+        numbers — no language model is involved.</p>
+    </div>
+    <div class="grid">
       <div class="card">
-        <h2>The same numbers, two reads</h2>
-        <div class="inputs">
-          <div><label for="na">A visitors</label><input type="number" id="na" value="44700" min="1"></div>
-          <div><label for="xa">A conversions</label><input type="number" id="xa" value="20034" min="0"></div>
-          <div><label for="nb">B visitors</label><input type="number" id="nb" value="45489" min="1"></div>
-          <div><label for="xb">B conversions</label><input type="number" id="xb" value="20119" min="0"></div>
-          <div><label for="pa">Prior α (both arms)</label><input type="number" id="pa" value="1" min="0.1" step="0.5"></div>
-          <div><label for="pb">Prior β (both arms)</label><input type="number" id="pb" value="1" min="0.1" step="0.5"></div>
+        <h3>The classic read</h3>
+        <div id="classic-out"></div>
+        <p class="callout" id="classic-sentence"></p>
+      </div>
+      <div class="card">
+        <h3>The Bayesian read</h3>
+        <div id="bayes-out"></div>
+        <p class="callout callout--b" id="bayes-sentence"></p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Posterior distributions</h3>
+      <div class="chart"><canvas id="posterior-chart"></canvas></div>
+      <p class="small muted"><span class="legend-dot" style="background:var(--accent)"></span>A
+        <span class="legend-dot" style="background:var(--series-2); margin-left:10px"></span>B —
+        what each arm's true rate plausibly is, given the data and the prior.</p>
+    </div>
+  </section>
+
+  <section class="tab" id="tab-cookie">
+    <div class="card">
+      <h2>Cookie Cats: move the gate from level 30 to level 40?</h2>
+      <p>90,189 players were split between a first gate at level 30 (A) and level 40 (B).
+        The question the game's team cared about: does making players wait longer for the
+        first gate hurt retention? Here is the test read both ways, with a bootstrap
+        interval as a third, distribution-free check. All three agree; the interesting
+        part is how plainly each one says it.</p>
+      <div id="cookie-out"><p class="muted">Loading the computed analysis…</p></div>
+      <div class="chart"><canvas id="cookie-chart"></canvas></div>
+      <p class="small muted">Data: the Cookie Cats A/B test (Tactile Entertainment),
+        via Kaggle / DataCamp — see the methods note in the footer. The dataset's license
+        is listed as "Unknown", so this site shows derived results only, not the raw data.</p>
+    </div>
+  </section>
+
+  <section class="tab" id="tab-peek">
+    <div class="card">
+      <h2>What happens if you keep looking?</h2>
+      <p>Simulate thousands of A/B tests where <b>A and B are identical</b>, check the
+        accumulating data every 250 visitors per arm, and stop at the first "positive"
+        read. Any positive is a false alarm — so how often does each stopping rule
+        produce one?</p>
+      <div id="peek-kpis" class="stats"></div>
+      <div class="chart"><canvas id="peek-chart"></canvas></div>
+      <p class="callout callout--bad"><b>The honest part:</b> the Bayesian rule is <b>not</b> immune.
+        Its false-positive rate climbs with the number of looks too. Stopping when the
+        expected loss is small changes the currency of the decision — you stop when
+        being wrong is cheap, not when a line is crossed — but with unlimited looks and
+        a fixed threshold it still manufactures confident wrong answers more often than
+        the threshold suggests. (Armitage, McPherson &amp; Rowe tabulated the classic
+        case in 1969; the × marks are their numbers.)</p>
+      <div class="callout callout--good">
+        <b>The fix is boring and free:</b> decide the sample size before you start, from
+        a power calculation, then look once.
+        <div class="inputs" style="margin-top:10px">
+          <div><label for="pk-base">Base rate (%)</label><input type="number" id="pk-base" value="10" step="0.5"></div>
+          <div><label for="pk-mde">Smallest effect worth detecting (points)</label><input type="number" id="pk-mde" value="2" step="0.5"></div>
+          <div><label>Visitors per arm needed (80% power)</label><input type="text" id="pk-n" disabled></div>
         </div>
-        <div class="presets">
-          <span class="small muted" style="align-self:center">Try:</span>
-          <button data-preset="cookie1">Cookie Cats · 1-day retention</button>
-          <button data-preset="cookie7">Cookie Cats · 7-day retention</button>
-          <button data-preset="check">Check case · 10 vs 20 of 100</button>
-          <button data-preset="trap">Small-sample trap · 6/60 vs 11/58</button>
-        </div>
-        <p class="small muted">Defaults are the Cookie Cats 1-day retention counts. Priors are
-          Beta(α, β) on each rate; (1, 1) is flat. The sentences are written by rules from the
-          numbers — no language model is involved.</p>
       </div>
-      <div class="grid2">
-        <div class="card">
-          <h3>The classic read</h3>
-          <div id="classic-out"></div>
-          <p class="sentence" id="classic-sentence"></p>
-        </div>
-        <div class="card">
-          <h3>The Bayesian read</h3>
-          <div id="bayes-out"></div>
-          <p class="sentence bayes" id="bayes-sentence"></p>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Posterior distributions</h3>
-        <canvas class="chart" id="posterior-chart"></canvas>
-        <p class="small muted"><span class="legend-dot" style="background:var(--a)"></span>A
-          <span class="legend-dot" style="background:var(--b); margin-left:10px"></span>B —
-          what each arm's true rate plausibly is, given the data and the prior.</p>
-      </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="tab" id="tab-cookie">
-      <div class="card">
-        <h2>Cookie Cats: move the gate from level 30 to level 40?</h2>
-        <p>90,189 players were split between a first gate at level 30 (A) and level 40 (B).
-          The question the game's team cared about: does making players wait longer for the
-          first gate hurt retention? Here is the test read both ways, with a bootstrap
-          interval as a third, distribution-free check. All three agree; the interesting
-          part is how plainly each one says it.</p>
-        <div id="cookie-out"><p class="muted">Loading the computed analysis…</p></div>
-        <canvas class="chart" id="cookie-chart"></canvas>
-        <p class="small muted">Data: the Cookie Cats A/B test (Tactile Entertainment),
-          via Kaggle / DataCamp — see the methods note in the footer. The dataset's license
-          is listed as "Unknown", so this site shows derived results only, not the raw data.</p>
-      </div>
-    </section>
+  <section class="tab" id="tab-thompson">
+    <div class="card">
+      <h2>Adaptive allocation: Thompson sampling vs 50/50</h2>
+      <p>Instead of splitting traffic evenly, Thompson sampling shifts visitors toward
+        whichever arm currently looks better. It earns more conversions <i>during</i> the
+        test. The cost shows up <i>after</i> it: the losing arm gets starved of data, so
+        the final read is weaker. Both halves of the trade are in the numbers below —
+        simulated, 2,000 tests of 4,000 visitors each.</p>
+      <div id="thompson-out"><p class="muted">Loading the simulation results…</p></div>
+    </div>
+  </section>
 
-    <section class="tab" id="tab-peek">
-      <div class="card">
-        <h2>What happens if you keep looking?</h2>
-        <p>Simulate thousands of A/B tests where <b>A and B are identical</b>, check the
-          accumulating data every 250 visitors per arm, and stop at the first "positive"
-          read. Any positive is a false alarm — so how often does each stopping rule
-          produce one?</p>
-        <div id="peek-kpis" class="kpi"></div>
-        <canvas class="chart" id="peek-chart"></canvas>
-        <p class="honest"><b>The honest part:</b> the Bayesian rule is <b>not</b> immune.
-          Its false-positive rate climbs with the number of looks too. Stopping when the
-          expected loss is small changes the currency of the decision — you stop when
-          being wrong is cheap, not when a line is crossed — but with unlimited looks and
-          a fixed threshold it still manufactures confident wrong answers more often than
-          the threshold suggests. (Armitage, McPherson &amp; Rowe tabulated the classic
-          case in 1969; the × marks are their numbers.)</p>
-        <div class="fix">
-          <b>The fix is boring and free:</b> decide the sample size before you start, from
-          a power calculation, then look once.
-          <div class="inputs" style="margin-top:10px">
-            <div><label for="pk-base">Base rate (%)</label><input type="number" id="pk-base" value="10" step="0.5"></div>
-            <div><label for="pk-mde">Smallest effect worth detecting (points)</label><input type="number" id="pk-mde" value="2" step="0.5"></div>
-            <div><label>Visitors per arm needed (80% power)</label><input type="text" id="pk-n" disabled></div>
-          </div>
-        </div>
-      </div>
-    </section>
+  <section class="tab" id="tab-llm">
+    <div class="card">
+      <h2>Can an LLM read an A/B result?</h2>
+      <p>Thirty fixed A/B summaries — clear wins, ties, small samples, borderline reads,
+        and results that were <i>peeked</i> into existence — put to language models two
+        ways. <b>Direct:</b> answer from judgement (a decision, a probability, any
+        concerns). <b>Code:</b> write Python that computes the answer, which is then
+        run and scored, not trusted. Ground truth is this page's own calculator under a
+        decision rule fixed before the run (ship at ≥ 95% probability with expected
+        loss ≤ 0.2 points; a peeked result can never justify shipping).</p>
+      <div id="llm-out"><p class="muted">Loading the check results…</p></div>
+      <div id="llm-items"></div>
+      <p class="small muted">Problem-flagging is scored by keyword match on the model's
+        own stated concerns — a generous, mechanical check, reported as one. Full
+        prompts, items and scores are in the repository.</p>
+    </div>
+  </section>
 
-    <section class="tab" id="tab-thompson">
-      <div class="card">
-        <h2>Adaptive allocation: Thompson sampling vs 50/50</h2>
-        <p>Instead of splitting traffic evenly, Thompson sampling shifts visitors toward
-          whichever arm currently looks better. It earns more conversions <i>during</i> the
-          test. The cost shows up <i>after</i> it: the losing arm gets starved of data, so
-          the final read is weaker. Both halves of the trade are in the numbers below —
-          simulated, 2,000 tests of 4,000 visitors each.</p>
-        <div id="thompson-out"><p class="muted">Loading the simulation results…</p></div>
-      </div>
-    </section>
+  <footer class="kit-footer">
+    <nav class="kit-siblings" aria-label="More tools">
+      <span class="kit-siblings-label">More tools:</span>
+      <a href="https://omidgolchin.github.io/experiment-hazard-simulator/">Experiment Hazard Simulator</a> ·
+      <a href="https://omidgolchin.github.io/bayesian-ab-lab/" aria-current="page">Bayesian A/B Lab</a> ·
+      <a href="https://omidgolchin.github.io/queue-simulator/">Queue Simulator</a>
+    </nav>
+    <p>Built by Omid Golchin. Shared design:
+      <a href="https://github.com/omidgolchin/omid-tools-kit">omid-tools-kit</a>.</p>
+  </footer>
 
-    <section class="tab" id="tab-llm">
-      <div class="card">
-        <h2>Can an LLM read an A/B result?</h2>
-        <p>Thirty fixed A/B summaries — clear wins, ties, small samples, borderline reads,
-          and results that were <i>peeked</i> into existence — put to language models two
-          ways. <b>Direct:</b> answer from judgement (a decision, a probability, any
-          concerns). <b>Code:</b> write Python that computes the answer, which is then
-          run and scored, not trusted. Ground truth is this page's own calculator under a
-          decision rule fixed before the run (ship at ≥ 95% probability with expected
-          loss ≤ 0.2 points; a peeked result can never justify shipping).</p>
-        <div id="llm-out"><p class="muted">Loading the check results…</p></div>
-        <div id="llm-items"></div>
-        <p class="small muted">Problem-flagging is scored by keyword match on the model's
-          own stated concerns — a generous, mechanical check, reported as one. Full
-          prompts, items and scores are in the repository.</p>
-      </div>
-    </section>
-
-  </div>
-</main>
-<footer>
-  <div class="wrap small muted">
+  <div class="small muted">
     <p><b>Methods &amp; sources.</b> The Bayesian read is the standard Beta-binomial
       treatment (Gelman et al., <i>Bayesian Data Analysis</i>, 3rd ed., 2013). The peeking
       analysis follows Armitage, McPherson &amp; Rowe (1969), "Repeated significance tests
@@ -218,9 +185,9 @@
       new method — it is classic machinery, implemented carefully, with the failure modes
       left in plain sight.</p>
   </div>
-</footer>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</main>
 <script src="abmath.js"></script>
+<script src="kit-chart.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

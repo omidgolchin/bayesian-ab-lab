@@ -1,0 +1,62 @@
+{
+ "counts": {
+  "gate_30": {
+   "n": 44700,
+   "retention_1": 20034,
+   "retention_7": 8502
+  },
+  "gate_40": {
+   "n": 45489,
+   "retention_1": 20119,
+   "retention_7": 8279
+  }
+ },
+ "metrics": {
+  "retention_1": {
+   "rate_a": 0.4481879194630872,
+   "rate_b": 0.44228274967574577,
+   "diff": -0.005905169787341458,
+   "classic_ci": [
+    -0.012392439449445217,
+    0.0005820998747623016
+   ],
+   "p_value": 0.07440965529691913,
+   "prob_b_beats_a": 0.03720602517537866,
+   "expected_loss_choose_a": 4.917717964156453e-05,
+   "expected_loss_choose_b": 0.0059541275532383415,
+   "bayes_diff_ci": [
+    -0.01239250410677329,
+    0.0005827537369228487
+   ],
+   "bootstrap_ci": [
+    -0.012440606962875163,
+    0.0005254810477818753
+   ],
+   "classic_sentence": "B's rate is -0.59 points from A's (95% CI -1.24 to +0.06), and the interval includes zero. The p-value is 0.074: a gap at least this large would appear in about 7% of experiments where the two versions are identical, so this test does not separate the two versions.",
+   "bayesian_sentence": "There is only a 4% chance that B's true rate is higher than A's. The difference is most plausibly between -1.24 and +0.06 points. Staying with A risks losing about 0.005 points on average if B is secretly better; shipping B risks about 0.595 points."
+  },
+  "retention_7": {
+   "rate_a": 0.19020134228187918,
+   "rate_b": 0.18200004396667327,
+   "diff": -0.008201298315205913,
+   "classic_ci": [
+    -0.013281552418885545,
+    -0.0031210442115262808
+   ],
+   "p_value": 0.001554249975614329,
+   "prob_b_beats_a": 0.0007773386645762415,
+   "expected_loss_choose_a": 5.478131606408284e-07,
+   "expected_loss_choose_b": 0.008201725960210925,
+   "bayes_diff_ci": [
+    -0.013282076914131608,
+    -0.0031207167778290763
+   ],
+   "bootstrap_ci": [
+    -0.013380124238310587,
+    -0.0031675348240396313
+   ],
+   "classic_sentence": "B's rate is -0.82 points from A's (95% CI -1.33 to -0.31). The p-value is 0.002: if the two versions were really identical, a gap at least this large would appear in about 0.2% of identical experiments.",
+   "bayesian_sentence": "There is only a 0% chance that B's true rate is higher than A's. The difference is most plausibly between -1.33 and -0.31 points. Staying with A risks losing about 0.000 points on average if B is secretly better; shipping B risks about 0.820 points."
+  }
+ }
+}

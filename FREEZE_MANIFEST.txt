@@ -1,0 +1,23 @@
+# FREEZE MANIFEST — bayesian-ab-lab (P14)
+# Frozen: 2026-11-12 (America/New_York) — before the LLM-check main run.
+# Re-issued 2026-11-12 after logged corrections (DECISIONS.md #15, #16, #17):
+# grid difference-CDF direction fix (stats.py), item24 counts (items.py),
+# scores-CSV writer fix (analyze.py). None changes the LLM-check ground
+# truth (probabilities / losses / decisions verified identical).
+# Verify: sha256sum -c FREEZE_MANIFEST.txt (ignoring these comment lines)
+
+4404de20d57c91c0576586ec8f8ba1865cd6fa316853dd4af51a4325365994bd  PLAN.md
+a31cd0634a63e686c63edb8356089561249a0d91f547c8681c19ac3b58a88e4a  config.yaml
+b57b5ee2503516d748ee95bf2d6af301cfe8780484845d533f764dea0b4c7627  requirements.txt
+049de0aafa5a01ae72c9b342c6dfd320000bd32be2331c08e5ded2550e9e8304  prompts/direct.md
+154da591546352fea04abd8c473d6121b48b98718761525d0eb8a08b4867375c  prompts/code.md
+e230da11361c94acc38a034323884d795cd03a522b9e8ceeacdeb520e4aca818  src/bayesab/__init__.py
+fefc1942a4fc7b9718eb3beac5854346c5e26c0703b4d96fc6957fc06b166d0e  src/bayesab/stats.py
+8a3015931fd1859d02ca15607c64037747e20e98c534363aadb9a84b294b3842  src/bayesab/simulate.py
+9cad7f1b610f4a86c01dce34c3cfe291367f2f6083317fcdcca605a9ef7d47a1  src/bayesab/items.py
+7522c20c803208e0e4572a26abec47518a08ae28825ef11e35c98b09ffb24f2f  src/bayesab/cookiecats.py
+bfa2dc154e1f35e53c424da16d231bfebccd028ba8c89fe7f95a7c05e61fcb24  src/bayesab/run.py
+09480fdd69c3939d5298aab10af981ee0271fc53684caf6a6d0ab8faca7444c3  src/bayesab/score.py
+6046cccc70b7a99664eb4048e50082d48d3e86be3c1c8c1fefc58eb6b093c65c  src/bayesab/sandbox.py
+7bee980dc42333e2275538f860c20efeec65275690e377118d61dfb35cdadc17  src/bayesab/analyze.py
+8dcb0a6ab68654a61db147bfd760e29596a68059cf3ebb8a102d022fc7235a4a  docs/abmath.js

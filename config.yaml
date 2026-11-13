@@ -1,0 +1,42 @@
+# Frozen before the LLM-check main run (see FREEZE_MANIFEST.txt).
+# Anything that changes the numbers changes this file and the plan first.
+
+priors:
+  alpha: 1
+  beta: 1
+
+decision_rule:
+  prob_threshold: 0.95        # ship the leader only at >= 95% probability
+  max_expected_loss: 0.002    # ... and at most 0.2 points of expected loss
+
+simulation:
+  base_rate: 0.10
+  peek_every: 250             # visitors per arm between looks
+  max_peeks: 40               # up to 10,000 visitors per arm
+  n_tests: 5000
+  loss_threshold: 0.0005      # Bayes stopping rule: expected loss < 0.05 points
+  alpha: 0.05
+  seed: 20261112
+  thompson:
+    p_a: 0.10
+    p_b: 0.12
+    horizon: 4000
+    n_sims: 2000
+    seed: 20261112
+
+llm_check:
+  temperature: 0.7
+  max_tokens: 4000
+  seed_base: 20261112
+  modes: [direct, code]
+  pilot_items: [item01, item13, item20, item24, item28]
+  # Filled in after the pilot, before the freeze: the two cheapest models
+  # from different families that answered all 5 pilot items in format.
+  models: [openai/gpt-oss-120b, thinkingmachines/Inkling-2-Small]
+  scoring:
+    direct_prob_tolerance_pp: 10
+    code_prob_tolerance_pp: 2
+    code_pvalue_tolerance: 0.02
+
+budget:
+  cap_usd: 3.00

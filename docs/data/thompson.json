@@ -1,0 +1,46 @@
+{
+ "effect": {
+  "settings": {
+   "n_sims": 2000,
+   "horizon": 4000,
+   "p_a": 0.1,
+   "p_b": 0.12,
+   "seed": 20261112
+  },
+  "fixed": {
+   "mean_conversions": 439.93,
+   "confident_and_right": 0.6525,
+   "confident_and_wrong": 0.0,
+   "regret_vs_oracle": 40.06999999999999
+  },
+  "thompson": {
+   "mean_conversions": 463.958,
+   "confident_and_right": 0.525,
+   "confident_and_wrong": 0.01,
+   "regret_vs_oracle": 16.041999999999973
+  },
+  "oracle_conversions": 480.0
+ },
+ "no_effect": {
+  "settings": {
+   "n_sims": 2000,
+   "horizon": 4000,
+   "p_a": 0.1,
+   "p_b": 0.1,
+   "seed": 20261113
+  },
+  "fixed": {
+   "mean_conversions": 399.662,
+   "confident_and_right": 0.889,
+   "confident_and_wrong": 0.111,
+   "regret_vs_oracle": 0.3380000000000223
+  },
+  "thompson": {
+   "mean_conversions": 399.869,
+   "confident_and_right": 0.806,
+   "confident_and_wrong": 0.194,
+   "regret_vs_oracle": 0.1309999999999718
+  },
+  "oracle_conversions": 400.0
+ }
+}

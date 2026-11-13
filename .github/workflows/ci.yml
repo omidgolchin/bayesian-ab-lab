@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run tests (no API calls)
+        run: pytest -q
+      - name: Smoke test on a tiny fixture
+        run: |
+          python -c "
+          from src.bayesab.stats import analyze
+          r = analyze(100, 10, 100, 20)
+          assert 0.95 < r.bayesian.prob_b_beats_a < 0.99, r.bayesian.prob_b_beats_a
+          print('smoke ok', round(r.bayesian.prob_b_beats_a, 4))
+          "

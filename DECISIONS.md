@@ -125,3 +125,12 @@ was taken and logged here; nothing waited on a human checkpoint.
     number changed; the manifest was re-issued. (The simulations are
     seeded, so the re-run reproduces identical values.)
 
+
+## 2026-11-13: v2, rebuilt as a decision tool
+
+- The page was a calculator plus four demo tabs (Cookie Cats, peeking simulator, adaptive allocation, LLM check). Visitors could not tell what it was for. v2 does one job: turn test results into a verdict. The experiments moved to the README's Research notes and `results/`.
+- Verdict rule: ship only when the Bayesian decision rule (probability and expected loss) and the classic evidence agree, the traffic split is sound and the sample is not tiny. Rationale: the peeking simulation showed a Bayesian expected-loss rule alone can be peeked into false wins; a p-value alone ignores the cost of a wrong call.
+- Peeking: when the visitor reports more than one look, the classic evidence switches to the mSPRT always-valid p-value (Johari et al. 2022), mixing scale = smallest worthwhile lift. Simulated false-alarm rate under 40 looks: about 2% (test asserts < 5%).
+- Equivalence (TOST, 90% interval inside +/- the smallest worthwhile lift) gives a "stop" verdict.
+- Loss tolerance default: 10% of the smallest worthwhile lift, so the tolerance scales with the conversion rate instead of a fixed 0.2 points (which was meaningless for low-rate pages).
+- AI assist: input side only, visitor's own key or copy-the-prompt; values whose quote is not found in the pasted text are left unticked.

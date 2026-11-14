@@ -8,7 +8,8 @@ simulation settings (config.yaml), and the LLM-check run log
 
 * results/summary.md      -- the headline write-up, numbers in prose
 * results/llmcheck_scores.csv
-* docs/data/cookiecats.json, peeking.json, thompson.json, llmcheck.json
+* docs/data/peeking.json (used by the tool page)
+* results/data/cookiecats.json, thompson.json, llmcheck.json (research notes)
   -- the JSON the playground charts from
 * results/figures/*.png   -- static figures for the README
 """
@@ -23,7 +24,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 RESULTS = ROOT / "results"
-DOCDATA = ROOT / "docs" / "data"
+DOCDATA = ROOT / "docs" / "data"   # data the tool page uses (peeking table)
+RESDATA = ROOT / "results" / "data"  # research-notes data, not used by the page
 FIGURES = RESULTS / "figures"
 
 
@@ -46,11 +48,12 @@ def main() -> None:
 
     RESULTS.mkdir(parents=True, exist_ok=True)
     DOCDATA.mkdir(parents=True, exist_ok=True)
+    RESDATA.mkdir(parents=True, exist_ok=True)
     FIGURES.mkdir(parents=True, exist_ok=True)
 
     # ---- Cookie Cats ------------------------------------------------------
     cc = analyze_cookie_cats()
-    _write_json(DOCDATA / "cookiecats.json", cc)
+    _write_json(RESDATA / "cookiecats.json", cc)
 
     # ---- peeking + thompson simulations -----------------------------------
     peeking = simulate_peeking(
@@ -77,7 +80,7 @@ def main() -> None:
         n_sims=th_cfg["n_sims"], horizon=th_cfg["horizon"],
         p_a=th_cfg["p_a"], p_b=th_cfg["p_a"], seed=th_cfg["seed"] + 1,
     )
-    _write_json(DOCDATA / "thompson.json",
+    _write_json(RESDATA / "thompson.json",
                 {"effect": thompson, "no_effect": thompson_null})
 
     # ---- LLM check scores ---------------------------------------------------
@@ -103,7 +106,7 @@ def main() -> None:
             writer.writeheader()
             writer.writerows(scores)
     llm_summary = _llm_summary(scores, items)
-    _write_json(DOCDATA / "llmcheck.json",
+    _write_json(RESDATA / "llmcheck.json",
                 {"summary": llm_summary, "scores": scores,
                  "items": [items[k] for k in sorted(items)]})
 

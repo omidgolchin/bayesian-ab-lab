@@ -1,129 +1,69 @@
-# Bayesian A/B Lab
+# A/B Test Decision Tool
 
-A small lab for reading an A/B test two ways, the classic significance
-test and the Bayesian read, built to find where each one misleads.
+For anyone who has run an A/B test and has to decide what to do next: enter visitors and conversions for each version and get a verdict you can defend (**ship**, **keep testing**, or **stop: no meaningful difference**), plus a planner for how long a new test needs to run.
 
-The surprise is in the peeking simulator. The Bayesian stopping rule,
-checked every 250 visitors per arm and stopped as soon as the expected
-loss of shipping the leader fell below 0.05 points, called a winner in
-**85.0%** of tests where the two arms were identical. The classic rule,
-stop at p < 0.05 and peeked at in exactly the same way, reached 29.1%.
-The rule usually offered as the careful alternative manufactured
-confident wrong answers nearly three times as often.
+![The tool switching between five examples: a clear win, a test checked every day, a broken traffic split, a test too early to call, and the Cookie Cats game test](docs/hero.gif)
 
-Nothing here is a new method. The Bayesian machinery is the standard
-Beta-binomial treatment from Gelman et al.'s *Bayesian Data Analysis*;
-the peeking analysis follows the repeated-significance-testing
-literature back to Armitage, McPherson & Rowe (1969). The point of the
-lab is the failure modes.
+**Use it:** https://omidgolchin.github.io/bayesian-ab-lab/ (runs in your browser; nothing you type leaves it)
 
-![The peeking simulator: as the number of looks grows toward 40, the classic false-positive rate climbs from 4.5% to 29.1%, and the Bayesian rule reaches 85.0%](docs/hero.gif)
+## What it does
 
-![The playground](docs/screenshots/playground-desktop.png)
+- **Analyze my test.** Four numbers in, one verdict out, in plain words, with the lift, the chance B is better and the evidence behind it. Optional: how many times you checked the results, how long it ran, the value of a conversion (turns the lift into dollars per 10,000 visitors).
+- **Plan a test.** Your conversion rate, the smallest lift worth detecting and your daily traffic give the visitors per version and a run length in whole weeks, with a chart of what a longer test buys.
+- **Fill from my notes.** Paste a dashboard export or a Slack thread; a language model (your key, or copy the prompt into any assistant) fills the form, showing the phrase each number came from. The model never sees or produces the verdict.
+- **Copy summary / Copy link.** A plain-text summary for Slack or email, and a link that reopens the tool with the same numbers.
 
-## The four parts
+## Built-in checks
 
-**1. The calculator.** Enter visitors and conversions (or load a
-preset) and get two reads side by side. The classic read gives the
-difference, a 95% confidence interval, and a p-value. The Bayesian
-read gives the posterior distributions, P(B beats A), the expected
-loss of shipping each version, and a 95% credible interval for the
-difference, under Beta priors you can change. Under each read sits one
-plain sentence, written by rules from the numbers, never by a language
-model.
+| Check | What it catches |
+|---|---|
+| Traffic split | Visitor counts that do not match the planned split (sample ratio mismatch): usually a tracking or assignment bug that biases everything else. The verdict becomes "Don't trust this test yet." |
+| Peeking | If you looked at the results more than once, a plain p-value is fooled far more often than 5% (about 20% after 12 looks). The tool switches to an always-valid p-value. |
+| No meaningful difference | An equivalence test, so "stop, the difference is too small to matter" is a verdict, not a shrug. |
+| Sample size | Too few conversions for the approximations to hold. |
+| Test length | Tests shorter than a week, or not in whole weeks, over- or under-represent weekdays. |
+| Several versions (planner) | Comparing more than one variant with the original splits the significance level (Bonferroni) and raises the sample size. |
 
-**2. The peeking simulator.** Thousands of simulated A/B tests where
-A and B are *identical*, checked every 250 visitors per arm and
-stopped at the first positive read, under two stopping rules: classic
-(stop at p < 0.05) and Bayesian (stop when the expected loss of
-shipping the leader falls below 0.05 points). The classic rule's
-false-positive rate climbs from 4.5% with one look to 29.1% with 40
-looks, close to Armitage et al.'s 1969 tabulation. The Bayesian rule
-climbs much faster: 8.4% at one look and **85.0%** at 40. A fixed loss
-threshold with unlimited peeking manufactures confident wrong answers
-far more often than the classic test does. The fix is a sample size
-fixed in advance, 3,839 visitors per arm to detect +2 points at 80%
-power, then one look.
+## Design decisions
 
-**3. Cookie Cats, both ways.** The published mobile-game A/B test
-(gate at level 30 vs level 40; 90,189 players), read classically and
-Bayesianly for 1-day and 7-day retention, with a bootstrap interval as
-a distribution-free check. Gate_40 retained worse on both metrics:
-1-day 44.23% vs 44.82% (−0.59 points; classic p = 0.074, P(gate_40
-better) = 3.7%) and 7-day 18.20% vs 19.02% (−0.82 points; p = 0.0016,
-P(gate_40 better) = 0.08%). The bootstrap interval agrees with both
-parametric reads.
+- **Ship needs both reads to agree.** The leader ships only if its chance of being better clears the bar (default 95%), its expected loss is under 10% of the smallest lift worth acting on (a "threshold of caring"), *and* the classic evidence is significant. A Bayesian rule alone can be peeked into false wins (see Research notes); a p-value alone says nothing about how costly a wrong call is.
+- **Always-valid p-value for repeated looks.** The mixture sequential probability ratio test (Johari, Koomen, Pekelis & Walsh 2022), the method behind commercial "check any time" testing. Its mixing scale is set to the smallest lift worth acting on. In this repo's simulation of 2,000 identical-arm tests checked 40 times, it raised a false alarm in under 5% (tested), against 29% for a plain p-value.
+- **Sample ratio mismatch at p < 0.001.** The conventional threshold in large-scale experimentation (Kohavi, Tang & Xu 2020, ch. 21): strict enough not to cry wolf on every test, and a real mismatch is usually far below it.
+- **Equivalence by two one-sided tests.** "No meaningful difference" requires the 90% interval to sit inside ± the smallest worthwhile lift (Schuirmann 1987); a non-significant result alone is not evidence of no difference.
+- **Run length in whole weeks.** Weekday and weekend visitors behave differently; a test that ends mid-week over-weights some days.
+- **A skeptical prior is one click away.** It treats both versions as if each had 1,000 prior visitors at the overall rate, which stops tiny samples from producing huge lifts.
+- **The AI assist only reads.** It fills inputs from messy text and must quote its source for each value; values whose quote is not found in your text are left unticked.
 
-**4. The LLM check.** Thirty fixed A/B summaries (clear wins, ties,
-small samples, borderline reads, and results that were peeked into
-existence) put to two language models two ways: *Direct* (answer from
-judgement: a decision, a probability, any concerns) and *Code* (write
-Python that computes the answer; the code runs in a sandbox and is
-scored, not trusted). Ground truth is this repo's calculator under a
-decision rule fixed before the run (PLAN.md). By decision accuracy,
-the best combination was Inkling-2-Small writing code: 0.96, with a
-mean probability error of 1.2 points and 7 of 9 planted problems
-flagged. gpt-oss-120b splits by metric. Its code mode decided better
-than its direct answers (0.85 vs 0.73), but its direct probabilities
-were far better calibrated (mean error 1.2 points, against 13.8 points
-in code mode). On probability error alone the tightest answers were
-Inkling's direct ones (0.1 points), though that mode decided worst of
-the four (0.62) and 6 of its 30 replies came back empty. The failure
-modes were specific: gpt-oss's code twice computed the *complementary*
-probability and once hit the needle-posterior quadrature trap at
-n = 100,000, while all six of Inkling's direct format failures were
-empty replies on problem items, where its reasoning ran to the token
-limit without answering.
+## Validation
 
-## Headline results
-
-![False-positive rate against number of looks, for both stopping
-rules](results/figures/peeking_fpr.png)
-
-Peeking, from 5,000 simulated test pairs with identical arms, checked
-every 250 visitors per arm and stopped at the first positive read:
-
-- Classic rule (stop at p < 0.05): false-positive rate 4.5% with one
-  look, 29.1% with 40 looks.
-- Bayesian rule (stop when the expected loss of shipping the leader
-  falls below 0.05 points): 8.4% with one look, 85.0% with 40 looks.
-- Fixed in advance instead: 3,839 visitors per arm detects a +2 point
-  difference at 80% power, with a single look at the end.
-
-The full computed write-up is in
-[results/summary.md](results/summary.md).
+- **31 tests** (`make test`): the Bayesian read against brute-force Monte Carlo; the JavaScript against the Python reference on fixed cases; sample ratio mismatch against `scipy.stats.chisquare`; the sample-size formula against the textbook case (3,841 per arm for 10% to 12%); the always-valid p-value's false-alarm rate under 40 looks; equivalence on constructed cases; the AI assist's prompt and reply handling.
+- **AI assist extraction:** a 20-item test set of realistic notes (`assist/testset.json`: Slack threads, dashboard exports, rates without counts, uneven splits, three versions, text with no numbers). Score any model with `ANTHROPIC_API_KEY=... node scripts/eval_assist.js`; results go to `results/assist_eval.json`. Not yet run for this release.
+- Checked on desktop and phone widths, in light and dark themes.
 
 ## What I learned
 
-- A Bayesian stopping rule is not protection against peeking. With a
-  fixed expected-loss threshold and unlimited looks it produced more
-  false positives than the classic test, not fewer (85.0% against
-  29.1% at 40 looks). Optional stopping is a design problem, not a
-  school-of-statistics problem.
-- My first grid computation of the difference distribution ran in the
-  wrong direction: it integrated the survival function where the CDF
-  belonged, and put the credible interval's low end at the edge of the
-  grid. The JavaScript version had the same bug. What caught it was
-  the tests that check the two implementations against each other and
-  both against Monte Carlo.
-- The empty answers in the LLM pilot were a budget problem, not a
-  model problem. At 1,200 tokens the reasoning models spent the whole
-  budget thinking and returned nothing; at 4,000 the same models
-  answered. Only one model finished the first pilot. The fix was a
-  number in the config, applied to every model before the freeze.
-- Scoring problem-flagging by keyword match is generous. A model can
-  earn the flag with a stock phrase, so the score says the words
-  appeared, not that the model understood the problem. The summary
-  reports it as the mechanical proxy it is.
+- A Bayesian stopping rule is not protection against peeking. With a fixed expected-loss threshold and unlimited looks it produced more false positives than the classic test, not fewer (85.0% against 29.1% at 40 looks). That is why the tool asks how many times you looked.
+- The most useful verdict turned out to be the one most calculators never give: "stop, the difference is too small to matter."
+- My first grid computation of the difference distribution ran in the wrong direction. What caught it was the tests that check the JavaScript and Python against each other and both against Monte Carlo.
+- A broken traffic split is the most common way real tests go wrong, and it is invisible unless you check for it.
+
+## Research notes
+
+The experiments behind the tool, kept out of it on purpose. Full numbers in [results/summary.md](results/summary.md).
+
+- **Peeking breaks Bayesian rules too.** 5,000 simulated tests with identical arms, checked every 250 visitors per arm: false wins reached 29.1% for the classic rule and 85.0% for a Bayesian expected-loss rule after 40 looks. ![Peeking](results/figures/peeking_fpr.png)
+- **Cookie Cats, read both ways.** Moving the game's first gate from level 30 to level 40 lowered 7-day retention by 0.82 points (p = 0.0016; P(level 40 better) = 0.08%). Both reads agree.
+- **Adaptive allocation.** Thompson sampling earned more conversions during a simulated test than a 50/50 split (464 vs 440 of 4,000), but reached a confident, correct final read less often (52.5% vs 65.2%).
+- **Can a language model read an A/B result?** 30 test summaries, two open models, asked directly or asked to write code. Writing code gave better ship/keep decisions for both models; one model's code answers still missed the probability badly. A small check (two models), not a ranking.
 
 ## Run it
 
 ```bash
 make setup                 # venv + pinned dependencies
 make data                  # download the Cookie Cats CSV (not redistributed; see DATA_SOURCES.md)
-make test                  # the spec's checks: Monte Carlo agreement, one-look FPR, JS/Python parity
-make analyze               # regenerate results/ and the playground's data files
-make serve                 # playground at http://localhost:8000
+make test                  # all checks, including JS/Python agreement
+make analyze               # regenerate results/ (research notes) and docs/data/peeking.json
+make serve                 # the tool at http://localhost:8000
 ```
 
 The LLM check can be re-run (it is resumable and skips completed
@@ -143,29 +83,16 @@ reading on its own.
 
 ## Layout
 
-- `src/bayesab/stats.py`: the calculator (exact formulas; fitted-grid
-  computation for large samples, checked against the exact ones)
-- `src/bayesab/simulate.py`: peeking and Thompson-sampling simulations
-- `src/bayesab/cookiecats.py`: the Cookie Cats analysis
-- `src/bayesab/items.py`: the 30 LLM-check summaries and ground truth
-- `src/bayesab/run.py` / `score.py` / `sandbox.py`: the LLM check
-- `docs/`: the playground (plain HTML/JS; maths in `abmath.js`,
-  tested against the Python)
-- `PLAN.md`: the frozen plan. `FREEZE_MANIFEST.txt`: its hashes
-- `DECISIONS.md`: every judgement call, logged. `SPEND.md`: costs
+- `docs/`: the tool (plain HTML and JavaScript, no build step). `decide.js` holds the verdict rules, `abmath.js` the classic and Bayesian reads, `tool-common.js` and `tool.css` the shared tool kit, `assist-config.js` the AI assist's prompt.
+- `src/bayesab/decide.py`: the reference implementation of the verdict rules; `stats.py`: the reads; the rest: the research-notes experiments.
+- `assist/` and `scripts/eval_assist.js`: the assist's test set and scorer.
+- `PLAN.md`, `FREEZE_MANIFEST.txt`, `DECISIONS.md`, `SPEND.md`: the frozen plan, its hashes, every judgment call and the costs of the research-notes experiments.
 
 ## Limitations
 
-- Conversion-type (Bernoulli) metrics only; one real dataset.
-- The grid computation used at large sample sizes is accurate to
-  plotting tolerance, not to the last decimal; the exact path is the
-  reference and the tests bind the two together.
-- Problem-flagging in the LLM check is scored by keyword match on the
-  model's stated concerns, a generous, mechanical proxy, reported
-  as one.
-- Two models, one run each per item, at temperature 0.7: the LLM
-  check shows how these models did on these items, not a ranking of
-  models in general.
+- Conversion metrics (converted or not) only; revenue per visitor and other continuous metrics need a different test.
+- Two versions in the analyzer; the planner handles up to four.
+- The always-valid p-value uses a normal approximation, so it is conservative at small samples (the small-sample check flags those).
 
 ## References
 
@@ -176,7 +103,11 @@ reading on its own.
    significance tests on accumulating data. *Journal of the Royal
    Statistical Society, Series A*, 132(2), 235–244.
 3. Miller, E. (2010). How not to run an A/B test. evanmiller.org.
-4. Cookie Cats data: "Mobile Games: A/B Testing" (Yufeng Sui),
+4. Johari, R., Koomen, P., Pekelis, L., & Walsh, D. (2022). Always valid inference: Continuous monitoring of A/B tests. *Operations Research*, 70(3), 1806–1821.
+5. Kohavi, R., Tang, D., & Xu, Y. (2020). *Trustworthy Online Controlled Experiments*. Cambridge University Press.
+6. Schuirmann, D. J. (1987). A comparison of the two one-sided tests procedure and the power approach for assessing the equivalence of average bioavailability. *Journal of Pharmacokinetics and Biopharmaceutics*, 15(6), 657–680.
+7. Fleiss, J. L., Levin, B., & Paik, M. C. (2003). *Statistical Methods for Rates and Proportions* (3rd ed.). Wiley.
+8. Cookie Cats data: "Mobile Games: A/B Testing" (Yufeng Sui),
    Kaggle / DataCamp project 184. License listed as "Unknown"; see
    [DATA_SOURCES.md](DATA_SOURCES.md).
 

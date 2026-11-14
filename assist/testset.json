@@ -1,0 +1,225 @@
+[
+ {
+  "id": "slack-1",
+  "text": "Quick update on the pricing page test (started Monday 2 weeks ago, 50/50 split). Control: 18,204 visitors, 731 signups. Variant with annual toggle: 18,110 visitors, 802 signups. I've been checking the dashboard every morning. Each signup is worth roughly $62 to us. We'd only bother shipping for a lift of 5% or more.",
+  "expected": {
+   "nA": 18204,
+   "xA": 731,
+   "nB": 18110,
+   "xB": 802,
+   "checks": 14,
+   "days": 14,
+   "share": 50,
+   "mde": 5,
+   "value": 62
+  }
+ },
+ {
+  "id": "dash-1",
+  "text": "Experiment: onboarding_v2 | Allocation 50% / 50% | Runtime: 9 days\nVariant | Users | Converted | CVR\ncontrol | 24,511 | 3,186 | 13.00%\ntreatment | 24,880 | 3,383 | 13.60%",
+  "expected": {
+   "nA": 24511,
+   "xA": 3186,
+   "nB": 24880,
+   "xB": 3383,
+   "days": 9,
+   "share": 50
+  }
+ },
+ {
+  "id": "rates-only",
+  "text": "Checkout button test. Original: 40,000 sessions at 3.1% conversion. New green button: 39,800 sessions at 3.4%. Ran three weeks, looked at it once at the end.",
+  "expected": {
+   "nA": 40000,
+   "xA": 1240,
+   "nB": 39800,
+   "xB": 1353,
+   "checks": 1,
+   "days": 21
+  }
+ },
+ {
+  "id": "uneven-split",
+  "text": "We sent 80% of traffic to the old flow and 20% to the new one to limit risk. Old flow: 52,300 users, 4,915 purchases. New flow: 13,050 users, 1,302 purchases. Average order value $48.",
+  "expected": {
+   "nA": 52300,
+   "xA": 4915,
+   "nB": 13050,
+   "xB": 1302,
+   "share": 20,
+   "value": 48
+  }
+ },
+ {
+  "id": "three-arms",
+  "text": "Headline test with three versions. A (current): 9,900 visitors, 410 clicks. B (question headline): 10,050 visitors, 455 clicks. C (number headline): 9,980 visitors, 431 clicks. We mainly care about B.",
+  "expected": {
+   "nA": 9900,
+   "xA": 410,
+   "nB": 10050,
+   "xB": 455
+  }
+ },
+ {
+  "id": "nothing-stated-meta",
+  "text": "Email subject line test: control 120,000 sends, 14,400 opens; variant 120,000 sends, 15,120 opens.",
+  "expected": {
+   "nA": 120000,
+   "xA": 14400,
+   "nB": 120000,
+   "xB": 15120
+  }
+ },
+ {
+  "id": "peeks-count",
+  "text": "Day 10 of the paywall test. I've peeked about 6 times so far, sorry. Control 7,200 / 288 paid. Test 7,150 / 329 paid. Planned 50-50.",
+  "expected": {
+   "nA": 7200,
+   "xA": 288,
+   "nB": 7150,
+   "xB": 329,
+   "checks": 6,
+   "days": 10,
+   "share": 50
+  }
+ },
+ {
+  "id": "relative-mde",
+  "text": "Plan said we need at least a 3% relative lift to justify the engineering. Results after 28 days: baseline 61,400 visitors and 2,456 conversions, challenger 61,900 visitors and 2,557 conversions.",
+  "expected": {
+   "nA": 61400,
+   "xA": 2456,
+   "nB": 61900,
+   "xB": 2557,
+   "days": 28,
+   "mde": 3
+  }
+ },
+ {
+  "id": "value-per-1000",
+  "text": "Signup form test, 50/50. Control: 5,000 visitors, 600 signups. Shorter form: 5,000 visitors, 660 signups. A signup is worth $15. Ran one week.",
+  "expected": {
+   "nA": 5000,
+   "xA": 600,
+   "nB": 5000,
+   "xB": 660,
+   "days": 7,
+   "share": 50,
+   "value": 15
+  }
+ },
+ {
+  "id": "percent-and-counts",
+  "text": "Variant B: 2,210 conversions out of 31,000 (7.13%). Variant A (control): 2,050 out of 30,700 (6.68%).",
+  "expected": {
+   "nA": 30700,
+   "xA": 2050,
+   "nB": 31000,
+   "xB": 2210
+  }
+ },
+ {
+  "id": "no-counts",
+  "text": "The new onboarding looks way better, conversion went up a lot, and the team is excited. Can we ship it?",
+  "expected": {}
+ },
+ {
+  "id": "weeks",
+  "text": "Test ran for 3 weeks with daily check-ins at standup. A: 15,400 visitors, 1,078 trials. B: 15,350 visitors, 1,151 trials.",
+  "expected": {
+   "nA": 15400,
+   "xA": 1078,
+   "nB": 15350,
+   "xB": 1151,
+   "checks": 21,
+   "days": 21
+  }
+ },
+ {
+  "id": "table-csv",
+  "text": "arm,visitors,conversions\ncontrol,8812,529\nvariant,8790,571\n(ran Mon-Sun, 7 days, 50/50 split, checked once)",
+  "expected": {
+   "nA": 8812,
+   "xA": 529,
+   "nB": 8790,
+   "xB": 571,
+   "checks": 1,
+   "days": 7,
+   "share": 50
+  }
+ },
+ {
+  "id": "revenue-not-value",
+  "text": "Pricing test. Control: 3,300 visitors, 99 purchases, $9,801 revenue. Variant: 3,280 visitors, 115 purchases, $10,925 revenue.",
+  "expected": {
+   "nA": 3300,
+   "xA": 99,
+   "nB": 3280,
+   "xB": 115
+  }
+ },
+ {
+  "id": "swap-order",
+  "text": "Treatment had 12,040 users and 1,686 activations; control had 11,980 users and 1,557 activations. 50/50 assignment, 14 days.",
+  "expected": {
+   "nA": 11980,
+   "xA": 1557,
+   "nB": 12040,
+   "xB": 1686,
+   "days": 14,
+   "share": 50
+  }
+ },
+ {
+  "id": "points-mde",
+  "text": "We decided up front that anything under 0.5 percentage points isn't worth it. Control 20,000 / 1,000. New 20,000 / 1,090.",
+  "expected": {
+   "nA": 20000,
+   "xA": 1000,
+   "nB": 20000,
+   "xB": 1090,
+   "mde": 10
+  }
+ },
+ {
+  "id": "split-changed",
+  "text": "Started 50/50, then on day 4 marketing moved the split to 70/30 in favour of the new page. Totals after 12 days: old page 9,100 visitors, 455 leads; new page 13,400 visitors, 737 leads.",
+  "expected": {
+   "nA": 9100,
+   "xA": 455,
+   "nB": 13400,
+   "xB": 737,
+   "days": 12
+  }
+ },
+ {
+  "id": "k-notation",
+  "text": "Banner test: control 45k impressions, 900 clicks; variant 44k impressions, 1,012 clicks. 50/50, 2 weeks.",
+  "expected": {
+   "nA": 45000,
+   "xA": 900,
+   "nB": 44000,
+   "xB": 1012,
+   "days": 14,
+   "share": 50
+  }
+ },
+ {
+  "id": "only-rates",
+  "text": "Control converted at 4.0% and the variant at 4.6%. We had about the same traffic in each.",
+  "expected": {}
+ },
+ {
+  "id": "ltv",
+  "text": "Upsell modal test: 6,400 users saw the old modal and 288 upgraded; 6,350 saw the new one and 343 upgraded. Upgrades are worth about $120 in first-year revenue. One-week test, single readout.",
+  "expected": {
+   "nA": 6400,
+   "xA": 288,
+   "nB": 6350,
+   "xB": 343,
+   "checks": 1,
+   "days": 7,
+   "value": 120
+  }
+ }
+]

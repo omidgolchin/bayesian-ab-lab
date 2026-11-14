@@ -1,193 +1,185 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bayesian A/B Lab — read a test two ways, and see what peeking does</title>
-<meta name="description" content="A learner's lab for A/B tests: a classic-vs-Bayesian calculator, a peeking simulator, the Cookie Cats test read both ways, and a check of whether an LLM reads A/B results correctly.">
+<title>A/B Test Decision Tool: ship, keep testing, or stop</title>
+<meta name="description" content="Enter your A/B test results and get a decision you can defend: ship, keep testing, or stop. Built-in checks for broken traffic splits, peeking and small samples, plus a planner for how long to run a test.">
 <script src="kit-theme.js"></script>
 <link rel="stylesheet" href="kit.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<style>
-  /* Tool-specific styles only (things the kit does not have): tab
-     panels, the calculator's input grid, and the series-2 callout
-     variant for the Bayesian sentence. Everything else is kit.css. */
-  section.tab { display: none; }
-  section.tab.active { display: block; }
-  .inputs { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); }
-  .inputs label { display: block; color: var(--muted); margin-bottom: 2px; }
-  .inputs input { width: 100%; }
-  @media (max-width: 760px) { .inputs { grid-template-columns: repeat(2, 1fr); } }
-  .callout--b { border-left-color: var(--series-2); }
-</style>
+<link rel="stylesheet" href="tool.css">
 </head>
 <body>
 <main>
   <header class="kit-header">
     <div class="kit-header-top">
-      <p class="kit-kicker">Omid Golchin · learning tools</p>
-      <button class="kit-theme-toggle" type="button" data-kit-theme-toggle
-        aria-label="Toggle light/dark mode">◐ Theme</button>
+      <p class="kit-kicker">Omid Golchin · Decision tools</p>
+      <button type="button" class="kit-theme-toggle" aria-pressed="false">◐ Theme</button>
     </div>
-    <h1>Bayesian A/B Lab</h1>
-    <p class="kit-tagline">A learner's lab for reading an A/B test two ways —
-      the classic significance test and the Bayesian read — and for checking
-      where each one misleads: what peeking does to both, and whether a
-      language model reads results correctly.</p>
+    <h1>A/B Test Decision Tool</h1>
+    <p class="kit-tagline">Enter your results. Get a decision you can defend, with the checks experienced analysts run first.</p>
   </header>
 
-  <nav class="tabs" id="tabs">
-    <button data-tab="calc" class="active">Calculator</button>
-    <button data-tab="cookie">Cookie Cats, both ways</button>
-    <button data-tab="peek">Peeking simulator</button>
-    <button data-tab="thompson">Adaptive allocation</button>
-    <button data-tab="llm">LLM check</button>
-  </nav>
+  <div class="tool-modes" role="tablist" aria-label="Mode">
+    <button type="button" role="tab" id="tab-analyze" class="active" aria-selected="true">Analyze my test</button>
+    <button type="button" role="tab" id="tab-plan" aria-selected="false">Plan a test</button>
+  </div>
 
-  <section class="tab active" id="tab-calc">
-    <div class="card">
-      <h2>The same numbers, two reads</h2>
-      <div class="inputs">
-        <div><label for="na">A visitors</label><input type="number" id="na" value="44700" min="1"></div>
-        <div><label for="xa">A conversions</label><input type="number" id="xa" value="20034" min="0"></div>
-        <div><label for="nb">B visitors</label><input type="number" id="nb" value="45489" min="1"></div>
-        <div><label for="xb">B conversions</label><input type="number" id="xb" value="20119" min="0"></div>
-        <div><label for="pa">Prior α (both arms)</label><input type="number" id="pa" value="1" min="0.1" step="0.5"></div>
-        <div><label for="pb">Prior β (both arms)</label><input type="number" id="pb" value="1" min="0.1" step="0.5"></div>
-      </div>
-      <div class="presets">
-        <span class="small muted" style="align-self:center">Try:</span>
-        <button data-preset="cookie1">Cookie Cats · 1-day retention</button>
-        <button data-preset="cookie7">Cookie Cats · 7-day retention</button>
-        <button data-preset="check">Check case · 10 vs 20 of 100</button>
-        <button data-preset="trap">Small-sample trap · 6/60 vs 11/58</button>
-      </div>
-      <p class="small muted">Defaults are the Cookie Cats 1-day retention counts. Priors are
-        Beta(α, β) on each rate; (1, 1) is flat. The sentences are written by rules from the
-        numbers — no language model is involved.</p>
-    </div>
-    <div class="grid">
-      <div class="card">
-        <h3>The classic read</h3>
-        <div id="classic-out"></div>
-        <p class="callout" id="classic-sentence"></p>
-      </div>
-      <div class="card">
-        <h3>The Bayesian read</h3>
-        <div id="bayes-out"></div>
-        <p class="callout callout--b" id="bayes-sentence"></p>
-      </div>
-    </div>
-    <div class="card">
-      <h3>Posterior distributions</h3>
-      <div class="chart"><canvas id="posterior-chart"></canvas></div>
-      <p class="small muted"><span class="legend-dot" style="background:var(--accent)"></span>A
-        <span class="legend-dot" style="background:var(--series-2); margin-left:10px"></span>B —
-        what each arm's true rate plausibly is, given the data and the prior.</p>
-    </div>
-  </section>
+  <!-- ================= ANALYZE ================= -->
+  <section id="view-analyze">
+    <div class="work">
+      <form class="panel" id="f-analyze" novalidate onsubmit="return false">
+        <div class="panel-head">
+          <h2>Your test</h2>
+          <select class="example" id="example" aria-label="Load an example">
+            <option value="">Load example…</option>
+          </select>
+        </div>
+        <div class="fields">
+          <div class="group-label">A · the original</div>
+          <div class="field"><label for="nA">Visitors</label><input id="nA" type="number" min="1" step="1" inputmode="numeric"></div>
+          <div class="field"><label for="xA">Conversions</label><input id="xA" type="number" min="0" step="1" inputmode="numeric"></div>
+          <div class="group-label">B · the new version</div>
+          <div class="field"><label for="nB">Visitors</label><input id="nB" type="number" min="1" step="1" inputmode="numeric"></div>
+          <div class="field"><label for="xB">Conversions</label><input id="xB" type="number" min="0" step="1" inputmode="numeric"></div>
+          <div class="group-label">About the test</div>
+          <div class="field full"><label for="mde">Smallest lift worth acting on</label>
+            <div class="with-unit"><input id="mde" type="number" min="0" step="any"><select id="mdeUnit" aria-label="Unit"><option value="rel">% relative</option><option value="abs">points</option></select></div>
+          </div>
+          <div class="field"><label for="checks">Times you checked the results</label><input id="checks" type="number" min="1" step="1" inputmode="numeric"><div class="hint">Count every look at the numbers, not just the last.</div></div>
+          <div class="field"><label for="days">Days it has run <span class="muted">(optional)</span></label><input id="days" type="number" min="0" step="1" inputmode="numeric"></div>
+          <div class="field"><label for="share">Planned share of traffic to B</label><div class="input-wrap"><input id="share" type="number" min="1" max="99" step="any"><span class="unit">%</span></div></div>
+          <div class="field full"><label for="value">Value of one conversion <span class="muted">(optional, $)</span></label><div class="input-wrap"><input id="value" type="number" min="0" step="any" placeholder="e.g. 40"><span class="unit">$</span></div></div>
+        </div>
+        <div class="actions" style="margin-top:12px">
+          <button type="button" id="assistToggle">✦ Fill from my notes</button>
+          <span class="footnote">Paste a dashboard export or a Slack thread; an AI model fills the form, the tool does the math.</span>
+        </div>
+        <div id="assistMount"></div>
+      </form>
 
-  <section class="tab" id="tab-cookie">
-    <div class="card">
-      <h2>Cookie Cats: move the gate from level 30 to level 40?</h2>
-      <p>90,189 players were split between a first gate at level 30 (A) and level 40 (B).
-        The question the game's team cared about: does making players wait longer for the
-        first gate hurt retention? Here is the test read both ways, with a bootstrap
-        interval as a third, distribution-free check. All three agree; the interesting
-        part is how plainly each one says it.</p>
-      <div id="cookie-out"><p class="muted">Loading the computed analysis…</p></div>
-      <div class="chart"><canvas id="cookie-chart"></canvas></div>
-      <p class="small muted">Data: the Cookie Cats A/B test (Tactile Entertainment),
-        via Kaggle / DataCamp — see the methods note in the footer. The dataset's license
-        is listed as "Unknown", so this site shows derived results only, not the raw data.</p>
-    </div>
-  </section>
-
-  <section class="tab" id="tab-peek">
-    <div class="card">
-      <h2>What happens if you keep looking?</h2>
-      <p>Simulate thousands of A/B tests where <b>A and B are identical</b>, check the
-        accumulating data every 250 visitors per arm, and stop at the first "positive"
-        read. Any positive is a false alarm — so how often does each stopping rule
-        produce one?</p>
-      <div id="peek-kpis" class="stats"></div>
-      <div class="chart"><canvas id="peek-chart"></canvas></div>
-      <p class="callout callout--bad"><b>The honest part:</b> the Bayesian rule is <b>not</b> immune.
-        Its false-positive rate climbs with the number of looks too. Stopping when the
-        expected loss is small changes the currency of the decision — you stop when
-        being wrong is cheap, not when a line is crossed — but with unlimited looks and
-        a fixed threshold it still manufactures confident wrong answers more often than
-        the threshold suggests. (Armitage, McPherson &amp; Rowe tabulated the classic
-        case in 1969; the × marks are their numbers.)</p>
-      <div class="callout callout--good">
-        <b>The fix is boring and free:</b> decide the sample size before you start, from
-        a power calculation, then look once.
-        <div class="inputs" style="margin-top:10px">
-          <div><label for="pk-base">Base rate (%)</label><input type="number" id="pk-base" value="10" step="0.5"></div>
-          <div><label for="pk-mde">Smallest effect worth detecting (points)</label><input type="number" id="pk-mde" value="2" step="0.5"></div>
-          <div><label>Visitors per arm needed (80% power)</label><input type="text" id="pk-n" disabled></div>
+      <div>
+        <section class="panel verdict" id="verdict" aria-live="polite">
+          <p class="v-kicker">Verdict</p>
+          <p class="v-title" id="vTitle">…</p>
+          <p class="v-body" id="vBody"></p>
+          <div class="kpis" id="kpis"></div>
+          <div class="checks" id="checksA" aria-label="Built-in checks"></div>
+        </section>
+        <div class="actions">
+          <button type="button" id="copySummary">Copy summary</button>
+          <button type="button" id="copyLink">Copy link</button>
+          <span class="toast" id="toastA"></span>
         </div>
       </div>
     </div>
+
+    <section class="panel" style="margin-top:16px">
+      <h2>How big is the difference?</h2>
+      <div class="svgchart" id="diffChart"></div>
+      <p class="chart-caption" id="diffCaption"></p>
+    </section>
+
+    <details class="more" id="moreSettings">
+      <summary>Decision settings <span class="sub">when to ship, prior beliefs</span></summary>
+      <div class="more-body">
+        <div class="fields" style="max-width:640px">
+          <div class="field"><label for="shipProb">Ship when the chance of being better is at least</label><div class="input-wrap"><input id="shipProb" type="number" min="50" max="99.9" step="any"><span class="unit">%</span></div></div>
+          <div class="field"><label for="lossFrac">…and the expected loss if wrong is under</label><div class="input-wrap"><input id="lossFrac" type="number" min="1" max="100" step="any"><span class="unit">%</span></div><div class="hint">of the smallest lift worth acting on</div></div>
+          <div class="field"><label for="prior">What you believed before the test</label>
+            <select id="prior"><option value="flat">No prior view (flat)</option><option value="skeptical">Skeptical: big lifts are rare</option></select>
+            <div class="hint" id="priorHint"></div></div>
+          <div class="field"><label for="alpha">Significance level</label><div class="input-wrap"><input id="alpha" type="number" min="0.1" max="20" step="any"><span class="unit">%</span></div></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="more">
+      <summary>Both reads in full <span class="sub">classic test, Bayesian read, posterior curves</span></summary>
+      <div class="more-body">
+        <div class="grid">
+          <div><h3>Classic read</h3><div class="table-scroll"><table id="tClassic"></table></div></div>
+          <div><h3>Bayesian read</h3><div class="table-scroll"><table id="tBayes"></table></div></div>
+        </div>
+        <h3 style="margin-top:16px">Where each version's true rate plausibly lies</h3>
+        <div class="svgchart" id="postChart"></div>
+      </div>
+    </details>
+
+    <details class="more">
+      <summary>How the verdict is decided <span class="sub">rules, formulas, sources</span></summary>
+      <div class="more-body small">
+        <p><b>Ship</b> the leading version only when all four hold: the traffic split matches the plan; the chance it is better clears your bar; the expected loss if it is not better is small next to the smallest lift worth acting on; and the classic evidence agrees (p below the significance level, using the always-valid p-value if you checked more than once). Requiring both reads to agree keeps the verdict from resting on one method's blind spot.</p>
+        <p><b>Stop: no meaningful difference</b> when the 90% interval for the difference sits inside ± the smallest lift worth acting on. This is an equivalence test (two one-sided tests; Schuirmann 1987): absence of a difference is shown, not assumed.</p>
+        <p><b>Keep testing</b> otherwise, with the visitors still needed to detect your smallest worthwhile lift at 80% power.</p>
+        <p><b>Traffic split check</b> (sample ratio mismatch): a chi-square test of the visitor counts against your planned split; flagged at p &lt; 0.001 (Kohavi, Tang &amp; Xu, <i>Trustworthy Online Controlled Experiments</i>, 2020, ch. 21).</p>
+        <p><b>Always-valid p-value</b>: the mixture sequential probability ratio test (Johari, Koomen, Pekelis &amp; Walsh, "Always valid inference", <i>Operations Research</i>, 2022), with the mixing scale set to your smallest worthwhile lift. It stays valid however often you look. In this repository's simulation (5,000 tests where A and B are identical, checked up to 40 times) it raised a false alarm in under 2% of tests; a plain p-value did so in 29%.</p>
+        <div class="formula">always-valid p = min(1, 1/Λ),  Λ = √(V/(V+τ²)) · exp( τ²·d² / (2V(V+τ²)) )
+d = rate_B − rate_A,  V = its variance,  τ = smallest lift worth acting on (points)</div>
+        <p><b>Bayesian read</b>: Beta-binomial posteriors for each rate (Gelman et al., <i>Bayesian Data Analysis</i>, 3rd ed.); expected loss is the average conversion rate you give up if you pick the version that is in fact worse.</p>
+        <p class="footnote">Want the experiments behind this tool (what peeking does to classic and Bayesian rules, the Cookie Cats test read both ways, whether language models read A/B results correctly)? See <a href="https://github.com/omidgolchin/bayesian-ab-lab#research-notes">Research notes</a>.</p>
+      </div>
+    </details>
   </section>
 
-  <section class="tab" id="tab-thompson">
-    <div class="card">
-      <h2>Adaptive allocation: Thompson sampling vs 50/50</h2>
-      <p>Instead of splitting traffic evenly, Thompson sampling shifts visitors toward
-        whichever arm currently looks better. It earns more conversions <i>during</i> the
-        test. The cost shows up <i>after</i> it: the losing arm gets starved of data, so
-        the final read is weaker. Both halves of the trade are in the numbers below —
-        simulated, 2,000 tests of 4,000 visitors each.</p>
-      <div id="thompson-out"><p class="muted">Loading the simulation results…</p></div>
+  <!-- ================= PLAN ================= -->
+  <section id="view-plan" hidden>
+    <div class="work">
+      <form class="panel" id="f-plan" novalidate onsubmit="return false">
+        <div class="panel-head"><h2>Your plan</h2></div>
+        <div class="fields">
+          <div class="field"><label for="pRate">Current conversion rate</label><div class="input-wrap"><input id="pRate" type="number" min="0.01" max="99" step="any"><span class="unit">%</span></div></div>
+          <div class="field"><label for="pMde">Smallest lift worth detecting</label>
+            <div class="with-unit"><input id="pMde" type="number" min="0" step="any"><select id="pMdeUnit" aria-label="Unit"><option value="rel">% relative</option><option value="abs">points</option></select></div></div>
+          <div class="field"><label for="pTraffic">Visitors per day entering the test</label><input id="pTraffic" type="number" min="1" step="1" inputmode="numeric"><div class="hint">All versions together.</div></div>
+          <div class="field"><label for="pVersions">Versions, including the original</label><select id="pVersions"><option>2</option><option>3</option><option>4</option></select></div>
+          <div class="field"><label for="pPower">Chance of detecting the lift if it is real</label><select id="pPower"><option value="0.8">80% (standard)</option><option value="0.9">90%</option></select></div>
+          <div class="field"><label for="pAlpha">Significance level</label><div class="input-wrap"><input id="pAlpha" type="number" min="0.1" max="20" step="any"><span class="unit">%</span></div></div>
+        </div>
+      </form>
+      <div>
+        <section class="panel verdict v-accent" id="pVerdict" aria-live="polite">
+          <p class="v-kicker">Plan</p>
+          <p class="v-title" id="pTitle">…</p>
+          <p class="v-body" id="pBody"></p>
+          <div class="kpis" id="pKpis"></div>
+          <div class="checks" id="checksP"></div>
+        </section>
+        <div class="actions">
+          <button type="button" id="pCopySummary">Copy plan</button>
+          <button type="button" id="pCopyLink">Copy link</button>
+          <span class="toast" id="toastP"></span>
+        </div>
+      </div>
     </div>
-  </section>
-
-  <section class="tab" id="tab-llm">
-    <div class="card">
-      <h2>Can an LLM read an A/B result?</h2>
-      <p>Thirty fixed A/B summaries — clear wins, ties, small samples, borderline reads,
-        and results that were <i>peeked</i> into existence — put to language models two
-        ways. <b>Direct:</b> answer from judgement (a decision, a probability, any
-        concerns). <b>Code:</b> write Python that computes the answer, which is then
-        run and scored, not trusted. Ground truth is this page's own calculator under a
-        decision rule fixed before the run (ship at ≥ 95% probability with expected
-        loss ≤ 0.2 points; a peeked result can never justify shipping).</p>
-      <div id="llm-out"><p class="muted">Loading the check results…</p></div>
-      <div id="llm-items"></div>
-      <p class="small muted">Problem-flagging is scored by keyword match on the model's
-        own stated concerns — a generous, mechanical check, reported as one. Full
-        prompts, items and scores are in the repository.</p>
-    </div>
+    <section class="panel" style="margin-top:16px">
+      <h2>What a longer test buys you</h2>
+      <div class="svgchart" id="planChart"></div>
+      <p class="chart-caption">Smallest lift you can reliably detect (at your power and significance level) for each test length, at your traffic. Gains flatten quickly: halving the detectable lift takes four times the visitors.</p>
+    </section>
+    <details class="more">
+      <summary>How the plan is computed <span class="sub">formula, sources</span></summary>
+      <div class="more-body small">
+        <p>Visitors per version from the standard two-proportion formula (Fleiss, Levin &amp; Paik, <i>Statistical Methods for Rates and Proportions</i>, 3rd ed., 2003). With more than two versions, each new version is compared with the original and the significance level is split across those comparisons (Bonferroni), so every comparison needs more visitors.</p>
+        <div class="formula">n per version = ( z₁₋α/₂ · √(2·p̄(1−p̄)) + z₁₋β · √(p₁(1−p₁) + p₂(1−p₂)) )² / (p₂ − p₁)²</div>
+        <p>Run length is rounded up to whole weeks, because weekday and weekend visitors often behave differently and a test that ends mid-week over-represents some days.</p>
+        <p>The plan assumes you read the result once, at the end. If you will check as you go, enter the number of checks in <b>Analyze my test</b>: it switches to the always-valid p-value, which stays honest under repeated looks but needs more data to call a winner.</p>
+      </div>
+    </details>
   </section>
 
   <footer class="kit-footer">
-    <nav class="kit-siblings" aria-label="More tools">
-      <span class="kit-siblings-label">More tools:</span>
-      <a href="https://omidgolchin.github.io/experiment-hazard-simulator/">Experiment Hazard Simulator</a> ·
-      <a href="https://omidgolchin.github.io/bayesian-ab-lab/" aria-current="page">Bayesian A/B Lab</a> ·
-      <a href="https://omidgolchin.github.io/queue-simulator/">Queue Simulator</a>
-    </nav>
-    <p>Built by Omid Golchin. Shared design:
-      <a href="https://github.com/omidgolchin/omid-tools-kit">omid-tools-kit</a>.</p>
+    <p class="kit-siblings"><span class="kit-siblings-label">More tools:</span>
+      <a href="https://omidgolchin.github.io/bayesian-ab-lab/" aria-current="page">A/B Test Decision Tool</a> ·
+      <a href="https://omidgolchin.github.io/queue-simulator/">Call Center Staffing Planner</a> ·
+      <a href="https://omidgolchin.github.io/experiment-hazard-simulator/">Agent Eval Planner</a></p>
+    <p>Built by Omid Golchin · <a href="https://github.com/omidgolchin/bayesian-ab-lab">Code, tests and design decisions</a> · Everything runs in your browser; nothing you type is sent anywhere unless you use the AI fill with your own key.</p>
   </footer>
-
-  <div class="small muted">
-    <p><b>Methods &amp; sources.</b> The Bayesian read is the standard Beta-binomial
-      treatment (Gelman et al., <i>Bayesian Data Analysis</i>, 3rd ed., 2013). The peeking
-      analysis follows Armitage, McPherson &amp; Rowe (1969), "Repeated significance tests
-      on accumulating data", <i>JRSS A</i> 132(2):235–244, and Evan Miller's "How Not To
-      Run an A/B Test" (2010). Cookie Cats data: "Mobile Games: A/B Testing" (Yufeng Sui)
-      on Kaggle, from the DataCamp project of the same name; license listed as "Unknown",
-      so the raw data is not redistributed — the repository ships a download script.
-      Simulations use fixed seeds and are reproducible from the repository.</p>
-    <p>Built to learn: a portfolio project by Omid Golchin. Nothing here is a claim of a
-      new method — it is classic machinery, implemented carefully, with its failure modes
-      shown.</p>
-  </div>
 </main>
 <script src="abmath.js"></script>
-<script src="kit-chart.js"></script>
+<script src="decide.js"></script>
+<script src="tool-common.js"></script>
+<script src="assist-config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

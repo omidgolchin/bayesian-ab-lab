@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this code, please cite it as below."
-title: "Bayesian A/B Lab: a calculator, a peeking simulator, and an LLM check"
+title: "A/B Test Decision Tool: ship, keep testing, or stop"
 authors:
   - family-names: "Golchin"
     given-names: "Omid"

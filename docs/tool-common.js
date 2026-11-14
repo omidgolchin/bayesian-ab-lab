@@ -105,7 +105,18 @@
     host.innerHTML = "";
     var W = Math.max(280, host.clientWidth || 600), H = spec.height || 260;
     var narrow = W < 480;
-    var m = { l: spec.yTitle ? 58 : 44, r: 14, t: spec.legend ? 30 : 12, b: spec.xTitle ? 46 : 28 };
+    var m = { l: spec.yTitle ? 58 : 44, r: 14, t: 12, b: spec.xTitle ? 46 : 28 };
+    var legendPos = [];
+    if (spec.legend) {
+      var lx0 = m.l, ly0 = 12;
+      (spec.series || []).forEach(function (s) {
+        if (!s.label) { legendPos.push(null); return; }
+        var w = 23 + s.label.length * 6.6 + 18;
+        if (lx0 + w > W - m.r && lx0 > m.l) { lx0 = m.l; ly0 += 17; }
+        legendPos.push([lx0, ly0]); lx0 += w;
+      });
+      m.t = ly0 + 18;
+    }
     var xs = [], ys = [];
     (spec.series || []).forEach(function (s) {
       s.points.forEach(function (p, i) {
@@ -165,6 +176,15 @@
         el("line", { x1: x - 4, x2: x + 4, y1: Y(ci[0]), y2: Y(ci[0]), stroke: c, "stroke-width": 1.5 }, svg);
         el("line", { x1: x - 4, x2: x + 4, y1: Y(ci[1]), y2: Y(ci[1]), stroke: c, "stroke-width": 1.5 }, svg);
       });
+      if (s.bars) {
+        var step = s.points.length > 1 ? Math.abs(X(s.points[1][0]) - X(s.points[0][0])) : 20;
+        var bw = Math.max(2, step * (s.barWidth || 0.72)), base0 = Y(Math.max(yMin, 0));
+        s.points.forEach(function (p, i) {
+          var hl = s.highlight != null && (Array.isArray(s.highlight) ? s.highlight.indexOf(i) >= 0 : s.highlight === i);
+          el("rect", { x: X(p[0]) - bw / 2, y: Math.min(Y(p[1]), base0), width: bw, height: Math.abs(base0 - Y(p[1])), fill: c, opacity: hl ? 1 : 0.55, rx: 1 }, svg);
+        });
+        return;
+      }
       var d = "";
       s.points.forEach(function (p, i) {
         if (s.step && i > 0) d += "L" + X(p[0]) + " " + Y(s.points[i - 1][1]);
@@ -181,13 +201,12 @@
       });
     });
     if (spec.legend) {
-      var lx = m.l;
       (spec.series || []).forEach(function (s, si) {
-        if (!s.label) return;
+        var pos = legendPos[si]; if (!pos) return;
         var c = color(s.color || ["accent", "series2", "neutral"][si % 3]);
-        el("line", { x1: lx, x2: lx + 18, y1: 12, y2: 12, stroke: c, "stroke-width": 2.5, "stroke-dasharray": s.dash || "none" }, svg);
-        var t = el("text", { x: lx + 23, y: 16 }, svg); t.textContent = s.label;
-        lx += 23 + s.label.length * 6.6 + 18;
+        if (s.markersOnly) el("circle", { cx: pos[0] + 9, cy: pos[1], r: 3.5, fill: c }, svg);
+        else el("line", { x1: pos[0], x2: pos[0] + 18, y1: pos[1], y2: pos[1], stroke: c, "stroke-width": 2.5, "stroke-dasharray": s.dash || "none" }, svg);
+        var t = el("text", { x: pos[0] + 23, y: pos[1] + 4 }, svg); t.textContent = s.label;
       });
     }
     return { X: X, Y: Y, svg: svg };

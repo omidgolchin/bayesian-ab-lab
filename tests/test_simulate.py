@@ -5,6 +5,7 @@ quadrature.
 """
 
 import numpy as np
+_trapz = getattr(np, "trapezoid", None) or np.trapz  # numpy 2 renamed trapz
 import pytest
 from scipy import stats as _stats
 
@@ -29,7 +30,7 @@ def test_grid_expected_loss_matches_exact():
         a_b, b_b = 1 + xb, 1 + n - xb
         cdf_a = _stats.beta.cdf(grid, a_a, b_a)
         cdf_b = _stats.beta.cdf(grid, a_b, b_b)
-        grid_loss_b = float(np.trapz(cdf_b * (1 - cdf_a), grid))
+        grid_loss_b = float(_trapz(cdf_b * (1 - cdf_a), grid))
         exact_loss_b = _expected_loss(a_a, b_a, a_b, b_b)
         assert grid_loss_b == pytest.approx(exact_loss_b, abs=2e-5)
 

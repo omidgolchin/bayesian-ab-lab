@@ -167,16 +167,16 @@
     var L = last, d = L.d, c = d.classic;
     var lift = L.rateA > 0 ? (L.rateB - L.rateA) / L.rateA : NaN;
     var items = [
-      [isFinite(lift) ? rel(lift) : "–", "lift of B (relative)"],
-      [pts(c.diff).replace(" pts", ""), "difference (points)"],
-      [F.pct(d.bayes.probBBeatsA, 1), "chance B is better"],
-      [pFmt(d.evidenceP), d.peeked ? "always-valid p-value" : "p-value"]
+      [isFinite(lift) ? rel(lift) : "–", "lift of B (relative)", "lift"],
+      [pts(c.diff).replace(" pts", ""), "difference (points)", "points"],
+      [F.pct(d.bayes.probBBeatsA, 1), "chance B is better", "probbetter"],
+      [pFmt(d.evidenceP), d.peeked ? "always-valid p-value" : "p-value", d.peeked ? "avp" : "pvalue"]
     ];
     if (L.v.value) {
       var per10k = (L.rateB - L.rateA) * 10000 * L.v.value;
       items.push([(per10k >= 0 ? "+" : "") + F.money(per10k), "value of B per 10,000 visitors"]);
     }
-    $("kpis").innerHTML = items.map(function (it) { return '<div class="kpi"><span class="k-val">' + it[0] + '</span><span class="k-lbl">' + it[1] + "</span></div>"; }).join("");
+    $("kpis").innerHTML = items.map(function (it) { return '<div class="kpi"><span class="k-val">' + it[0] + '</span><span class="k-lbl">' + it[1] + (it[2] ? ' <button type="button" data-tip="' + it[2] + '"></button>' : "") + "</span></div>"; }).join("");
   }
 
   function renderChecks() {
@@ -321,9 +321,9 @@
     $("pKpis").innerHTML = [
       [F.int(total), "visitors in total"],
       [Math.ceil(days) + " d", "days of traffic needed"],
-      [weeks + " wk", "run length (whole weeks)"],
+      [weeks + " wk", "run length (whole weeks)", "weeks"],
       [v.pVersions > 2 ? (v.pAlpha / (v.pVersions - 1)).toFixed(2) + "%" : v.pAlpha + "%", v.pVersions > 2 ? "significance per comparison" : "significance level"]
-    ].map(function (it) { return '<div class="kpi"><span class="k-val">' + it[0] + '</span><span class="k-lbl">' + it[1] + "</span></div>"; }).join("");
+    ].map(function (it) { return '<div class="kpi"><span class="k-val">' + it[0] + '</span><span class="k-lbl">' + it[1] + (it[2] ? ' <button type="button" data-tip="' + it[2] + '"></button>' : "") + "</span></div>"; }).join("");
     var cks = [];
     cks.push(["ok", "WEEKS", "Weekly cycles", "Rounded up to whole weeks so every weekday is equally represented."]);
     if (v.pVersions > 2) cks.push(["warn", "ADJUSTED", "Several versions", v.pVersions - 1 + " comparisons with the original, so each uses a significance level of " + (v.pAlpha / (v.pVersions - 1)).toFixed(2) + "% (Bonferroni). That is why each version needs more visitors."]);
@@ -352,6 +352,23 @@
     var P = lastPlan;
     return ["A/B test plan: " + P.title, P.body, "", "Checks: " + P.checks.map(function (c) { return c[2].toLowerCase(); }).join(", "), "", "Open this plan: " + location.href].join("\n");
   }
+
+  Tool.explain({
+    lift: { t: "Lift: relative or points", d: "Two ways to say how much better B is. If A converts at 4.0% and B at 4.4%, the difference is 0.4 <i>points</i>, which is a 10% <i>relative</i> lift (0.4 ÷ 4.0). Pick whichever your team uses; the tool converts between them." },
+    points: { t: "Difference in points", d: "B's conversion rate minus A's, in percentage points. 4.4% − 4.0% = +0.4 points." },
+    peeking: { t: "Why the number of looks matters", d: "A classic p-value assumes you read the result once. If you check daily and stop the first time it dips below 5%, the real chance of a false win can pass 25%. With more than one look the tool switches to an <i>always-valid</i> p-value, which stays honest however often you check." },
+    srm: { t: "Broken split (sample ratio mismatch)", d: "If you planned 50/50 but got 10,000 vs 9,400 visitors, something in the setup is dropping or misrouting people, and the comparison is no longer fair. A chi-square test flags splits that chance alone almost never produces (p &lt; 0.001). Fix the setup before trusting any result." },
+    interval: { t: "Reading the interval chart", d: "Each bar is the range of differences the data still allow, at 95%. The dot is the best estimate. If the whole bar sits right of zero, B is better; if it overlaps the shaded band, the gain could be too small to matter. The two rows use two methods (classic and Bayesian); they usually agree, and the tool tells you when they do not." },
+    probbetter: { t: "Chance B is better", d: "From a Bayesian read of the same counts: given what the test saw, the probability that B's true rate is above A's. Unlike a p-value, it answers the question people actually ask. It is computed from Beta distributions for each rate." },
+    loss: { t: "Expected loss", d: "If you ship B and B is in fact worse, how much conversion rate do you give up, averaged over all the ways that could happen? A small expected loss means a wrong call would be cheap, so you can ship with less certainty." },
+    prior: { t: "Prior belief", d: "What you would have guessed before seeing the data. 'Flat' lets the data speak alone. 'Skeptical' says big lifts are rare (true of most mature products), which pulls small-sample wins toward zero and protects you from lucky early results." },
+    alpha: { t: "Significance level", d: "The false-win rate you accept: at 5%, a test between two identical versions will still declare a winner about 1 time in 20. Lower it when acting on a false win is expensive." },
+    pvalue: { t: "p-value", d: "If A and B were truly identical, how often would chance alone produce a gap at least this big? A small p-value (below your significance level) means the gap is hard to explain by luck. It is <i>not</i> the chance that B is better." },
+    avp: { t: "Always-valid p-value", d: "A p-value built to be checked repeatedly (a mixture sequential probability ratio test). It is slightly more conservative than the classic one, and in exchange the false-win rate stays at your significance level no matter how many times you looked." },
+    power: { t: "Power", d: "The chance the test detects the lift if the lift is real. At 80%, one real improvement in five is missed. More visitors raise power." },
+    mde: { t: "Detectable lift", d: "The smallest lift the test can reliably catch (at your power and significance level). It shrinks with the square root of the visitors: four times the traffic halves it." },
+    weeks: { t: "Why whole weeks", d: "Visitors on weekends often behave differently from weekdays. Ending mid-week over-weights some days, so the run is rounded up to whole weeks." }
+  });
 
   setMode(state.mode === "plan" ? "plan" : "analyze");
 })();

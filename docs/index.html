@@ -20,13 +20,21 @@
     <p class="kit-tagline">Enter your results. Get a decision you can defend, with the checks experienced analysts run first.</p>
   </header>
 
-  <div class="tool-modes" role="tablist" aria-label="Mode">
+  <div class="tool-modes" role="tablist" aria-label="What do you want to do?">
     <button type="button" role="tab" id="tab-analyze" class="active" aria-selected="true">Analyze my test</button>
     <button type="button" role="tab" id="tab-plan" aria-selected="false">Plan a test</button>
   </div>
 
   <!-- ================= ANALYZE ================= -->
-  <section id="view-analyze">
+  <section id="view-analyze" role="tabpanel" aria-labelledby="tab-analyze">
+    <div class="guide" aria-label="How to use this mode">
+      <ol class="steps">
+        <li><b>Enter the counts</b> for A and B from your analytics: how many people saw each version and how many converted.</li>
+        <li><b>Say what lift matters</b> to you, and how many times you looked at the numbers while the test ran.</li>
+        <li><b>Read the verdict</b>: ship, keep testing, or stop. The checks underneath say why, and what to fix first.</li>
+      </ol>
+      <p class="also"><b>Also here:</b> <i>Plan a test</i> works out how long to run one · <i>Fill from my notes</i> reads a pasted report for you · <i>Copy link</i> saves your numbers in the address · the sections at the bottom show both statistical reads and every formula.</p>
+    </div>
     <div class="work">
       <form class="panel" id="f-analyze" novalidate onsubmit="return false">
         <div class="panel-head">
@@ -37,19 +45,20 @@
         </div>
         <div class="fields">
           <div class="group-label">A · the original</div>
-          <div class="field"><label for="nA">Visitors</label><input id="nA" type="number" min="1" step="1" inputmode="numeric"></div>
-          <div class="field"><label for="xA">Conversions</label><input id="xA" type="number" min="0" step="1" inputmode="numeric"></div>
+          <div class="field"><label for="nA">Visitors</label><input id="nA" type="number" min="1" step="1" inputmode="numeric"><div class="hint">People who saw the original during the test. Count each person once.</div></div>
+          <div class="field"><label for="xA">Conversions</label><input id="xA" type="number" min="0" step="1" inputmode="numeric"><div class="hint">How many of them did what you measure: bought, signed up, clicked.</div></div>
           <div class="group-label">B · the new version</div>
-          <div class="field"><label for="nB">Visitors</label><input id="nB" type="number" min="1" step="1" inputmode="numeric"></div>
-          <div class="field"><label for="xB">Conversions</label><input id="xB" type="number" min="0" step="1" inputmode="numeric"></div>
+          <div class="field"><label for="nB">Visitors</label><input id="nB" type="number" min="1" step="1" inputmode="numeric"><div class="hint">People who saw the new version.</div></div>
+          <div class="field"><label for="xB">Conversions</label><input id="xB" type="number" min="0" step="1" inputmode="numeric"><div class="hint">How many of them converted, counted the same way as for A.</div></div>
           <div class="group-label">About the test</div>
-          <div class="field full"><label for="mde">Smallest lift worth acting on</label>
-            <div class="with-unit"><input id="mde" type="number" min="0" step="any"><select id="mdeUnit" aria-label="Unit"><option value="rel">% relative</option><option value="abs">points</option></select></div>
+          <div class="field full"><label for="mde">Smallest lift worth acting on <button type="button" data-tip="lift"></button></label>
+            <div class="with-unit"><input id="mde" type="number" min="0" step="any" aria-describedby="mdeHint"><select id="mdeUnit" aria-label="Unit for the lift"><option value="rel">% relative</option><option value="abs">points</option></select></div>
+            <div class="hint" id="mdeHint">The smallest improvement that would change what you do. A smaller difference than this counts as "no real difference".</div>
           </div>
-          <div class="field"><label for="checks">Times you checked the results</label><input id="checks" type="number" min="1" step="1" inputmode="numeric"><div class="hint">Count every look at the numbers, not just the last.</div></div>
-          <div class="field"><label for="days">Days it has run <span class="muted">(optional)</span></label><input id="days" type="number" min="0" step="1" inputmode="numeric"></div>
-          <div class="field"><label for="share">Planned share of traffic to B</label><div class="input-wrap"><input id="share" type="number" min="1" max="99" step="any"><span class="unit">%</span></div></div>
-          <div class="field full"><label for="value">Value of one conversion <span class="muted">(optional, $)</span></label><div class="input-wrap"><input id="value" type="number" min="0" step="any" placeholder="e.g. 40"><span class="unit">$</span></div></div>
+          <div class="field"><label for="checks">Times you checked the results <button type="button" data-tip="peeking"></button></label><input id="checks" type="number" min="1" step="1" inputmode="numeric"><div class="hint">Count every look, including this one. Each extra look raises the chance of a false win, so the tool corrects for it.</div></div>
+          <div class="field"><label for="days">Days it has run <span class="muted">(optional)</span></label><input id="days" type="number" min="0" step="1" inputmode="numeric"><div class="hint">Checks that the test covered whole weeks, since weekdays and weekends differ.</div></div>
+          <div class="field"><label for="share">Planned share of traffic to B <button type="button" data-tip="srm"></button></label><div class="input-wrap"><input id="share" type="number" min="1" max="99" step="any"><span class="unit">%</span></div><div class="hint">The split you set up: 50 for a 50/50 test. Used to catch a broken split.</div></div>
+          <div class="field"><label for="value">Value of one conversion <span class="muted">(optional, $)</span></label><div class="input-wrap"><input id="value" type="number" min="0" step="any" placeholder="e.g. 40"><span class="unit">$</span></div><div class="hint">What one extra conversion is worth to you. Adds the money at stake to the verdict; leave empty to skip.</div></div>
         </div>
         <div class="actions" style="margin-top:12px">
           <button type="button" id="assistToggle">✦ Fill from my notes</button>
@@ -75,7 +84,7 @@
     </div>
 
     <section class="panel" style="margin-top:16px">
-      <h2>How big is the difference?</h2>
+      <h2>How big is the difference? <button type="button" data-tip="interval"></button></h2>
       <div class="svgchart" id="diffChart"></div>
       <p class="chart-caption" id="diffCaption"></p>
     </section>
@@ -84,12 +93,12 @@
       <summary>Decision settings <span class="sub">when to ship, prior beliefs</span></summary>
       <div class="more-body">
         <div class="fields" style="max-width:640px">
-          <div class="field"><label for="shipProb">Ship when the chance of being better is at least</label><div class="input-wrap"><input id="shipProb" type="number" min="50" max="99.9" step="any"><span class="unit">%</span></div></div>
-          <div class="field"><label for="lossFrac">…and the expected loss if wrong is under</label><div class="input-wrap"><input id="lossFrac" type="number" min="1" max="100" step="any"><span class="unit">%</span></div><div class="hint">of the smallest lift worth acting on</div></div>
-          <div class="field"><label for="prior">What you believed before the test</label>
+          <div class="field"><label for="shipProb">Ship when the chance of being better is at least <button type="button" data-tip="probbetter"></button></label><div class="input-wrap"><input id="shipProb" type="number" min="50" max="99.9" step="any"><span class="unit">%</span></div><div class="hint">How sure you want to be before shipping. 95% is a common bar; raise it when a wrong ship is costly.</div></div>
+          <div class="field"><label for="lossFrac">…and the expected loss if wrong is under <button type="button" data-tip="loss"></button></label><div class="input-wrap"><input id="lossFrac" type="number" min="1" max="100" step="any"><span class="unit">%</span></div><div class="hint">As a share of the smallest lift worth acting on. 10% means "if I am wrong, I lose very little".</div></div>
+          <div class="field"><label for="prior">What you believed before the test <button type="button" data-tip="prior"></button></label>
             <select id="prior"><option value="flat">No prior view (flat)</option><option value="skeptical">Skeptical: big lifts are rare</option></select>
             <div class="hint" id="priorHint"></div></div>
-          <div class="field"><label for="alpha">Significance level</label><div class="input-wrap"><input id="alpha" type="number" min="0.1" max="20" step="any"><span class="unit">%</span></div></div>
+          <div class="field"><label for="alpha">Significance level <button type="button" data-tip="alpha"></button></label><div class="input-wrap"><input id="alpha" type="number" min="0.1" max="20" step="any"><span class="unit">%</span></div><div class="hint">The false-win rate you accept for the classic test. 5% is standard; lower is stricter.</div></div>
         </div>
       </div>
     </details>
@@ -123,18 +132,26 @@ d = rate_B − rate_A,  V = its variance,  τ = smallest lift worth acting on (p
   </section>
 
   <!-- ================= PLAN ================= -->
-  <section id="view-plan" hidden>
+  <section id="view-plan" role="tabpanel" aria-labelledby="tab-plan" hidden>
+    <div class="guide" aria-label="How to use this mode">
+      <ol class="steps">
+        <li><b>Enter today's rate</b> and how many visitors a day will enter the test.</li>
+        <li><b>Say the smallest lift worth detecting</b>, and how sure you want to be of catching it.</li>
+        <li><b>Get the plan</b>: visitors per version and whole weeks to run. The chart shows what a longer test buys.</li>
+      </ol>
+      <p class="also"><b>Also here:</b> <i>Copy plan</i> gives a paragraph for your team · once the test has run, switch to <i>Analyze my test</i>.</p>
+    </div>
     <div class="work">
       <form class="panel" id="f-plan" novalidate onsubmit="return false">
         <div class="panel-head"><h2>Your plan</h2></div>
         <div class="fields">
-          <div class="field"><label for="pRate">Current conversion rate</label><div class="input-wrap"><input id="pRate" type="number" min="0.01" max="99" step="any"><span class="unit">%</span></div></div>
-          <div class="field"><label for="pMde">Smallest lift worth detecting</label>
-            <div class="with-unit"><input id="pMde" type="number" min="0" step="any"><select id="pMdeUnit" aria-label="Unit"><option value="rel">% relative</option><option value="abs">points</option></select></div></div>
+          <div class="field"><label for="pRate">Current conversion rate</label><div class="input-wrap"><input id="pRate" type="number" min="0.01" max="99" step="any"><span class="unit">%</span></div><div class="hint">What the page converts at today. Take a typical recent week from your analytics.</div></div>
+          <div class="field"><label for="pMde">Smallest lift worth detecting <button type="button" data-tip="lift"></button></label>
+            <div class="with-unit"><input id="pMde" type="number" min="0" step="any"><select id="pMdeUnit" aria-label="Unit for the lift"><option value="rel">% relative</option><option value="abs">points</option></select></div><div class="hint">Smaller lifts need far more visitors: half the lift, four times the traffic.</div></div>
           <div class="field"><label for="pTraffic">Visitors per day entering the test</label><input id="pTraffic" type="number" min="1" step="1" inputmode="numeric"><div class="hint">All versions together.</div></div>
-          <div class="field"><label for="pVersions">Versions, including the original</label><select id="pVersions"><option>2</option><option>3</option><option>4</option></select></div>
-          <div class="field"><label for="pPower">Chance of detecting the lift if it is real</label><select id="pPower"><option value="0.8">80% (standard)</option><option value="0.9">90%</option></select></div>
-          <div class="field"><label for="pAlpha">Significance level</label><div class="input-wrap"><input id="pAlpha" type="number" min="0.1" max="20" step="any"><span class="unit">%</span></div></div>
+          <div class="field"><label for="pVersions">Versions, including the original</label><select id="pVersions"><option>2</option><option>3</option><option>4</option></select><div class="hint">Each extra version is compared with the original, so each comparison needs more visitors.</div></div>
+          <div class="field"><label for="pPower">Chance of detecting the lift if it is real <button type="button" data-tip="power"></button></label><select id="pPower"><option value="0.8">80% (standard)</option><option value="0.9">90%</option></select><div class="hint">90% needs about a third more visitors than 80%.</div></div>
+          <div class="field"><label for="pAlpha">Significance level <button type="button" data-tip="alpha"></button></label><div class="input-wrap"><input id="pAlpha" type="number" min="0.1" max="20" step="any"><span class="unit">%</span></div><div class="hint">The false-win rate you accept. 5% is standard.</div></div>
         </div>
       </form>
       <div>
@@ -153,7 +170,7 @@ d = rate_B − rate_A,  V = its variance,  τ = smallest lift worth acting on (p
       </div>
     </div>
     <section class="panel" style="margin-top:16px">
-      <h2>What a longer test buys you</h2>
+      <h2>What a longer test buys you <button type="button" data-tip="mde"></button></h2>
       <div class="svgchart" id="planChart"></div>
       <p class="chart-caption">Smallest lift you can reliably detect (at your power and significance level) for each test length, at your traffic. Gains flatten quickly: halving the detectable lift takes four times the visitors.</p>
     </section>
@@ -169,10 +186,7 @@ d = rate_B − rate_A,  V = its variance,  τ = smallest lift worth acting on (p
   </section>
 
   <footer class="kit-footer">
-    <p class="kit-siblings"><span class="kit-siblings-label">More tools:</span>
-      <a href="https://omidgolchin.github.io/bayesian-ab-lab/" aria-current="page">A/B Test Decision Tool</a> ·
-      <a href="https://omidgolchin.github.io/queue-simulator/">Call Center Staffing Planner</a> ·
-      <a href="https://omidgolchin.github.io/experiment-hazard-simulator/">Agent Eval Planner</a></p>
+    <p class="kit-siblings"></p>
     <p>Built by Omid Golchin · <a href="https://github.com/omidgolchin/bayesian-ab-lab">Code, tests and design decisions</a> · Everything runs in your browser; nothing you type is sent anywhere unless you use the AI fill with your own key.</p>
   </footer>
 </main>

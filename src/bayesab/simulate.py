@@ -22,6 +22,7 @@ from a power calculation, then one look.
 from __future__ import annotations
 
 import numpy as np
+_trapz = getattr(np, "trapezoid", None) or np.trapz  # numpy 2 renamed trapz
 from scipy import stats
 
 from .stats import _prob_b_beats_a
@@ -81,8 +82,8 @@ def simulate_peeking(
                                1 + n - cum_a[:, k][:, None])
         cdf_b = stats.beta.cdf(grid[None, :], 1 + cum_b[:, k][:, None],
                                1 + n - cum_b[:, k][:, None])
-        loss_choose_b = np.trapz(cdf_b * (1 - cdf_a), grid, axis=1)
-        loss_choose_a = np.trapz(cdf_a * (1 - cdf_b), grid, axis=1)
+        loss_choose_b = _trapz(cdf_b * (1 - cdf_a), grid, axis=1)
+        loss_choose_a = _trapz(cdf_a * (1 - cdf_b), grid, axis=1)
         leader_is_b = cum_b[:, k] >= cum_a[:, k]
         leader_loss = np.where(leader_is_b, loss_choose_b, loss_choose_a)
         stopped |= leader_loss < LOSS_THRESHOLD

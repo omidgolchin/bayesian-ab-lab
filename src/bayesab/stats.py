@@ -21,6 +21,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+_trapz = getattr(np, "trapezoid", None) or np.trapz  # numpy 2 renamed trapz
 from scipy import integrate, stats
 
 Z_95 = 1.959963984540054  # standard normal 97.5% quantile
@@ -213,16 +214,16 @@ def _grid_pack(a_a: float, b_a: float, a_b: float, b_b: float) -> dict:
     cdf_b = stats.beta.cdf(xs, a_b, b_b)
     pdf_a = stats.beta.pdf(xs, a_a, b_a)
     pdf_b = stats.beta.pdf(xs, a_b, b_b)
-    prob = float(np.trapz(pdf_b * cdf_a, xs))
-    loss_b = float(np.trapz(cdf_b * (1 - cdf_a), xs))
-    loss_a = float(np.trapz(cdf_a * (1 - cdf_b), xs))
+    prob = float(_trapz(pdf_b * cdf_a, xs))
+    loss_b = float(_trapz(cdf_b * (1 - cdf_a), xs))
+    loss_a = float(_trapz(cdf_a * (1 - cdf_b), xs))
     # F_diff(d) = P(p_B - p_A <= d) = E over p_A of F_B(p_A + d)
     ds = np.linspace(lo - hi, hi - lo, 1201)
     fb_at = np.interp(
         np.clip(xs[None, :] + ds[:, None], lo, hi), xs, cdf_b,
         left=0.0, right=1.0,
     )
-    d_cdf = np.trapz(pdf_a[None, :] * fb_at, xs, axis=1)
+    d_cdf = _trapz(pdf_a[None, :] * fb_at, xs, axis=1)
     d_cdf = np.maximum.accumulate(d_cdf)
     if d_cdf[-1] > 0:
         d_cdf = d_cdf / d_cdf[-1]

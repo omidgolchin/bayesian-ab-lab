@@ -188,7 +188,7 @@
     if (v.checks <= 1) out.push(["ok", "OK", "Peeking", "Read once, so the plain p-value means what it says."]);
     else {
       var f = d.peekFpr;
-      out.push(["warn", "ADJUSTED", "Peeking", "Checked " + v.checks + " times. A plain p-value would be fooled " + (f ? "about " + Math.round(100 * f) + "%" : "nearly 30%") + " of the time instead of 5%, so this read uses the always-valid p-value (" + pFmt(d.alwaysValidP) + ")."]);
+      out.push(["warn", "ADJUSTED", "Peeking", "Checked " + v.checks + " times. A plain p-value would be fooled " + (f ? "about " + Math.round(100 * f) + "%" : "up to 29% (after 40 looks)") + " of the time instead of 5%, so this read uses the always-valid p-value (" + pFmt(d.alwaysValidP) + ")."]);
     }
     out.push(d.small
       ? ["warn", "SMALL", "Sample size", "Under 10 conversions or non-conversions in a version: intervals and p-values are unreliable here."]
@@ -297,6 +297,19 @@
   }
 
   /* ---------- plan ---------- */
+  var PLAN_EX = [
+    { label: "Busy checkout: 20,000 visitors a day at 4.2%", v: { pRate: 4.2, pMde: 5, pMdeUnit: "rel", pTraffic: 20000, pVersions: "2", pPower: "0.8", pAlpha: 5 } },
+    { label: "Small site: 600 a day at 3%, looking for a 20% lift", v: { pRate: 3, pMde: 20, pMdeUnit: "rel", pTraffic: 600, pVersions: "2", pPower: "0.8", pAlpha: 5 } },
+    { label: "Newsletter sign-up: 2,500 a day at 12%, three versions", v: { pRate: 12, pMde: 8, pMdeUnit: "rel", pTraffic: 2500, pVersions: "3", pPower: "0.8", pAlpha: 5 } },
+    { label: "Low-traffic B2B demo form: 150 a day at 2%", v: { pRate: 2, pMde: 30, pMdeUnit: "rel", pTraffic: 150, pVersions: "2", pPower: "0.8", pAlpha: 10 } }
+  ];
+  PLAN_EX.forEach(function (ex, i) { var o = document.createElement("option"); o.value = i; o.textContent = ex.label; $("pExample").appendChild(o); });
+  $("pExample").addEventListener("change", function () {
+    if (this.value === "") return;
+    var ex = PLAN_EX[+this.value]; this.value = "";
+    Object.keys(ex.v).forEach(function (k) { $(k).value = ex.v[k]; });
+    runPlan();
+  });
   function runPlan() {
     var v = { pRate: num("pRate"), pMde: num("pMde"), pMdeUnit: $("pMdeUnit").value, pTraffic: num("pTraffic"),
       pVersions: Number($("pVersions").value), pPower: Number($("pPower").value), pAlpha: num("pAlpha") };
@@ -356,7 +369,7 @@
   Tool.explain({
     lift: { t: "Lift: relative or points", d: "Two ways to say how much better B is. If A converts at 4.0% and B at 4.4%, the difference is 0.4 <i>points</i>, which is a 10% <i>relative</i> lift (0.4 ÷ 4.0). Pick whichever your team uses; the tool converts between them." },
     points: { t: "Difference in points", d: "B's conversion rate minus A's, in percentage points. 4.4% − 4.0% = +0.4 points." },
-    peeking: { t: "Why the number of looks matters", d: "A classic p-value assumes you read the result once. If you check daily and stop the first time it dips below 5%, the real chance of a false win can pass 25%. With more than one look the tool switches to an <i>always-valid</i> p-value, which stays honest however often you check." },
+    peeking: { t: "Why the number of looks matters", d: "A classic p-value assumes you read the result once. If you check daily and stop the first time it dips below 5%, the real chance of a false win climbs: in this repository's simulation of two identical versions, 29% after 40 looks. The verdict states the figure for your own number of looks. With more than one look the tool switches to an <i>always-valid</i> p-value, which stays honest however often you check." },
     srm: { t: "Broken split (sample ratio mismatch)", d: "If you planned 50/50 but got 10,000 vs 9,400 visitors, something in the setup is dropping or misrouting people, and the comparison is no longer fair. A chi-square test flags splits that chance alone almost never produces (p &lt; 0.001). Fix the setup before trusting any result." },
     interval: { t: "Reading the interval chart", d: "Each bar is the range of differences the data still allow, at 95%. The dot is the best estimate. If the whole bar sits right of zero, B is better; if it overlaps the shaded band, the gain could be too small to matter. The two rows use two methods (classic and Bayesian); they usually agree, and the tool tells you when they do not." },
     probbetter: { t: "Chance B is better", d: "From a Bayesian read of the same counts: given what the test saw, the probability that B's true rate is above A's. Unlike a p-value, it answers the question people actually ask. It is computed from Beta distributions for each rate." },
@@ -367,6 +380,8 @@
     avp: { t: "Always-valid p-value", d: "A p-value built to be checked repeatedly (a mixture sequential probability ratio test). It is slightly more conservative than the classic one, and in exchange the false-win rate stays at your significance level no matter how many times you looked." },
     power: { t: "Power", d: "The chance the test detects the lift if the lift is real. At 80%, one real improvement in five is missed. More visitors raise power." },
     mde: { t: "Detectable lift", d: "The smallest lift the test can reliably catch (at your power and significance level). It shrinks with the square root of the visitors: four times the traffic halves it." },
+    posterior: { t: "Posterior", d: "What the data say each version's true conversion rate could be, as a probability curve: Bayes' rule combines your prior belief with the counts. Tall and narrow means the rate is pinned down; wide means it is still uncertain." },
+    credible: { t: "Credible interval", d: "The Bayesian counterpart of a confidence interval: given the data (and the prior), there is a 95% probability the true difference lies inside it. With a flat prior and this much data it is usually almost the same as the classic 95% interval." },
     weeks: { t: "Why whole weeks", d: "Visitors on weekends often behave differently from weekdays. Ending mid-week over-weights some days, so the run is rounded up to whole weeks." }
   });
 

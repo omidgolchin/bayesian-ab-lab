@@ -50,10 +50,10 @@
           <div class="group-label">B · the new version</div>
           <div class="field"><label for="nB">Visitors</label><input id="nB" type="number" min="1" step="1" inputmode="numeric"><div class="hint">People who saw the new version.</div></div>
           <div class="field"><label for="xB">Conversions</label><input id="xB" type="number" min="0" step="1" inputmode="numeric"><div class="hint">How many of them converted, counted the same way as for A.</div></div>
-          <div class="group-label">About the test</div>
+          <div class="group-label">About the test: the starting values are safe defaults</div>
           <div class="field full"><label for="mde">Smallest lift worth acting on <button type="button" data-tip="lift"></button></label>
             <div class="with-unit"><input id="mde" type="number" min="0" step="any" aria-describedby="mdeHint"><select id="mdeUnit" aria-label="Unit for the lift"><option value="rel">% relative</option><option value="abs">points</option></select></div>
-            <div class="hint" id="mdeHint">The smallest improvement that would change what you do. A smaller difference than this counts as "no real difference".</div>
+            <div class="hint" id="mdeHint">The smallest improvement that would change what you do; only the four counts above are required, everything below can stay as it is. This one number also sets what counts as "no meaningful difference" and how much expected loss is tolerable, so choose it before you look at the result.</div>
           </div>
           <div class="field"><label for="checks">Times you checked the results <button type="button" data-tip="peeking"></button></label><input id="checks" type="number" min="1" step="1" inputmode="numeric"><div class="hint">Count every look, including this one. Each extra look raises the chance of a false win, so the tool corrects for it.</div></div>
           <div class="field"><label for="days">Days it has run <span class="muted">(optional)</span></label><input id="days" type="number" min="0" step="1" inputmode="numeric"><div class="hint">Checks that the test covered whole weeks, since weekdays and weekends differ.</div></div>
@@ -90,7 +90,7 @@
     </section>
 
     <details class="more" id="moreSettings">
-      <summary>Decision settings <span class="sub">when to ship, prior beliefs</span></summary>
+      <summary>Decision settings <span class="sub">for experienced users; the defaults are standard and safe to leave</span></summary>
       <div class="more-body">
         <div class="fields" style="max-width:640px">
           <div class="field"><label for="shipProb">Ship when the chance of being better is at least <button type="button" data-tip="probbetter"></button></label><div class="input-wrap"><input id="shipProb" type="number" min="50" max="99.9" step="any"><span class="unit">%</span></div><div class="hint">How sure you want to be before shipping. 95% is a common bar; raise it when a wrong ship is costly.</div></div>
@@ -108,9 +108,9 @@
       <div class="more-body">
         <div class="grid">
           <div><h3>Classic read</h3><div class="table-scroll"><table id="tClassic"></table></div></div>
-          <div><h3>Bayesian read</h3><div class="table-scroll"><table id="tBayes"></table></div></div>
+          <div><h3>Bayesian read <button type="button" data-tip="credible"></button></h3><div class="table-scroll"><table id="tBayes"></table></div></div>
         </div>
-        <h3 style="margin-top:16px">Where each version's true rate plausibly lies</h3>
+        <h3 style="margin-top:16px">Where each version's true rate plausibly lies <button type="button" data-tip="posterior"></button></h3>
         <div class="svgchart" id="postChart"></div>
       </div>
     </details>
@@ -143,7 +143,8 @@ d = rate_B − rate_A,  V = its variance,  τ = smallest lift worth acting on (p
     </div>
     <div class="work">
       <form class="panel" id="f-plan" novalidate onsubmit="return false">
-        <div class="panel-head"><h2>Your plan</h2></div>
+        <div class="panel-head"><h2>Your plan</h2>
+          <select class="example" id="pExample" aria-label="Load an example plan"><option value="">Load example…</option></select></div>
         <div class="fields">
           <div class="field"><label for="pRate">Current conversion rate</label><div class="input-wrap"><input id="pRate" type="number" min="0.01" max="99" step="any"><span class="unit">%</span></div><div class="hint">What the page converts at today. Take a typical recent week from your analytics.</div></div>
           <div class="field"><label for="pMde">Smallest lift worth detecting <button type="button" data-tip="lift"></button></label>

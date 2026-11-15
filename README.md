@@ -21,7 +21,7 @@ For anyone who has run an A/B test and has to decide what to do next: enter visi
 | Check | What it catches |
 |---|---|
 | Traffic split | Visitor counts that do not match the planned split (sample ratio mismatch): usually a tracking or assignment bug that biases everything else. The verdict becomes "Don't trust this test yet." |
-| Peeking | If you looked at the results more than once, a plain p-value is fooled far more often than 5% (about 20% after 12 looks). The tool switches to an always-valid p-value. |
+| Peeking | If you looked at the results more than once, a plain p-value is fooled far more often than 5% (29% after 40 looks in this repository's simulation; the check states the figure for your own number of looks). The tool switches to an always-valid p-value. |
 | No meaningful difference | An equivalence test, so "stop, the difference is too small to matter" is a verdict, not a shrug. |
 | Sample size | Too few conversions for the approximations to hold. |
 | Test length | Tests shorter than a week, or not in whole weeks, over- or under-represent weekdays. |

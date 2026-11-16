@@ -18,6 +18,14 @@
     </div>
     <h1>A/B Test Decision Tool</h1>
     <p class="kit-tagline">Enter your results. Get a decision you can defend, with the checks experienced analysts run first.</p>
+    <div class="start-here">
+      <p class="sh-q"><b>It answers:</b> whether to ship the new version, keep testing or stop, from the visitors and conversions of an A/B test; and, before a test, how long it needs to run.</p>
+      <ol>
+        <li><b>Pick the situation closest to yours</b> in "Start from a common situation", or keep the clear win already filled in.</li>
+        <li><b>Type your own counts</b> in the strip: visitors and conversions for A and B, and the smallest lift worth acting on. Say how many times you looked at the results. Planning a test instead? Open <i>Plan a test</i>.</li>
+        <li><b>Read the decision</b> beside the chart and the checks under it. Before you rely on it, check <a href="#fit" class="open-details">when to use this tool, and when not</a>.</li>
+      </ol>
+    </div>
   </header>
 
   <div class="tool-modes" role="tablist" aria-label="What do you want to do?">
@@ -31,8 +39,8 @@
     <form class="panel strip-panel" id="f-analyze" novalidate onsubmit="return false">
       <div class="panel-head">
         <h2>Your test <span class="sub">one row per version</span></h2>
-        <select class="example" id="example" aria-label="Load an example">
-          <option value="">Load example…</option>
+        <select class="example" id="example" aria-label="Start from a common situation">
+          <option value="">Start from a common situation…</option>
         </select>
       </div>
       <div class="table-scroll">
@@ -144,7 +152,7 @@ d = rate_B − rate_A,  V = its variance,  τ = smallest lift worth acting on (p
     <div class="work stack">
       <form class="panel" id="f-plan" novalidate onsubmit="return false">
         <div class="panel-head"><h2>Your plan</h2>
-          <select class="example" id="pExample" aria-label="Load an example plan"><option value="">Load example…</option></select></div>
+          <select class="example" id="pExample" aria-label="Load an example plan"><option value="">Start from a common situation…</option></select></div>
         <div class="fields">
           <div class="field"><label for="pRate">Current conversion rate</label><div class="input-wrap"><input id="pRate" type="number" min="0.01" max="99" step="any"><span class="unit">%</span></div><div class="hint">What the page converts at today. Take a typical recent week from your analytics.</div></div>
           <div class="field"><label for="pMde">Smallest lift worth detecting <button type="button" data-tip="lift"></button></label>
@@ -189,6 +197,35 @@ d = rate_B − rate_A,  V = its variance,  τ = smallest lift worth acting on (p
   <details class="more" id="glossary">
     <summary>Glossary <span class="sub">every term the "?" buttons explain, gathered in one place</span></summary>
     <div class="more-body"><dl class="glossary-list" id="glossaryList"></dl></div>
+  </details>
+
+  <details class="more guide" id="fit">
+    <summary>When to use it, and when not <span class="sub">assumptions, limits, alternatives</span></summary>
+    <div class="more-body small">
+      <p><b>Use it</b> to decide a finished or running A/B test on a yes-or-no outcome per visitor (signed up, bought, clicked, came back), to catch the common ways a test goes wrong (a broken split, peeking, too little data), or to size a test before it starts.</p>
+      <p><b>It assumes</b> the following. Each line says what happens to the answer when your case breaks the assumption.</p>
+      <table class="fit-table">
+        <thead><tr><th>Assumption</th><th>If yours differs</th></tr></thead>
+        <tbody>
+          <tr><td>The outcome is yes or no for each visitor: converted or not.</td><td>Revenue per visitor, order value or time on site are averages with long tails. Use a t-test or a bootstrap on the per-visitor values instead.</td></tr>
+          <tr><td>Visitors are assigned at random, and the unit you count is the unit you assigned.</td><td>If you assign users but count page views or sessions, the counts are not independent and the intervals come out too narrow. Count users, or use the delta method for ratio metrics.</td></tr>
+          <tr><td>Each visitor sees one version, and one visitor's version does not affect another's.</td><td>In marketplaces, social products or shared pricing, groups interfere. Those need cluster or switchback designs.</td></tr>
+          <tr><td>Behaviour is stable over the test, apart from weekday patterns.</td><td>A new design often gets a novelty bump or a learning dip. Run whole weeks, and look at whether the lift fades over time before you trust it.</td></tr>
+          <tr><td>You report every look at the results.</td><td>If you peeked more often than you enter, the evidence is weaker than the tool shows.</td></tr>
+          <tr><td>Two versions in Analyze.</td><td>For three or more versions, compare each with A and use the planner's correction for several versions, or a multi-arm method.</td></tr>
+        </tbody>
+      </table>
+      <p><b>Do not use it</b> to choose the winner of a test that is allocating traffic adaptively (a bandit), for metrics that are not yes-or-no, or as a substitute for checking that the tracking itself is right.</p>
+    </div>
+  </details>
+
+  <details class="more guide" id="origin">
+    <summary>Where this tool comes from <span class="sub">the problem and data it was built on, and how it was generalised</span></summary>
+    <div class="more-body small">
+      <p>The tool comes out of a set of experiments kept in this repository (<a href="https://github.com/omidgolchin/bayesian-ab-lab/blob/main/results/summary.md">results/summary.md</a>):</p>
+      <ul><li><b>Peeking breaks both kinds of rule.</b> In 5,000 simulated tests with identical versions, checked up to 40 times, a plain p-value declared a false winner in 29.1% and a Bayesian expected-loss rule in 85.0%. So the tool asks how many times you looked, uses an always-valid p-value when you looked more than once, and ships only when the Bayesian and classic reads agree.</li><li><b>A real test, read both ways.</b> In Cookie Cats, a public mobile-game test, moving the first gate from level 30 to 40 lowered 7-day retention by 0.82 points; both reads agree. It is one of the situations.</li><li><b>Adaptive allocation</b> (Thompson sampling) earned more conversions during a simulated test but reached a confident, correct read less often (52.5% against 65.2%). The tool reads fixed-split tests only.</li></ul>
+      <p><b>How it was generalised.</b> The experiments fixed their rates, sample sizes and number of looks. The tool takes your counts, looks, test length and the smallest lift worth acting on, and adds the checks that catch broken tests: the traffic split, too few conversions, part weeks and "no meaningful difference". The experiments also checked whether language models can read an A/B result; that part did not become part of the tool, and its AI fill only reads your notes into the form.</p>
+    </div>
   </details>
 
   <footer class="kit-footer">

@@ -14,6 +14,7 @@ For anyone who has run an A/B test and has to decide what to do next: enter visi
 - **Plan a test.** Your conversion rate, the smallest lift worth detecting and your daily traffic give the visitors per version and a run length in whole weeks, with a chart of what a longer test buys.
 - **Fill from my notes.** Paste a dashboard export or a Slack thread; a language model (your key, or copy the prompt into any assistant) fills the form, showing the phrase each number came from. The model never sees or produces the verdict.
 - **Copy summary / Copy link.** A plain-text summary for Slack or email, and a link that reopens the tool with the same numbers.
+- **Start here.** The page opens with the question it answers and three steps; a list of common situations fills the form; and a section says when to use the tool and when not.
 - **Help where you need it.** Each mode opens with a line saying what to enter and what you get; every input is labelled with what the number is, why it matters and where to find it; every technical term in the inputs and results has a **?** that opens a plain-language explanation; and a glossary at the bottom of the page gathers the terms in one place.
 
 ## Built-in checks
@@ -49,6 +50,49 @@ For anyone who has run an A/B test and has to decide what to do next: enter visi
 - The most useful verdict turned out to be the one most calculators never give: "stop, the difference is too small to matter."
 - My first grid computation of the difference distribution ran in the wrong direction. What caught it was the tests that check the JavaScript and Python against each other and both against Monte Carlo.
 - A broken traffic split is the most common way real tests go wrong, and it is invisible unless you check for it.
+
+## Common situations
+
+The form opens with "Start from a common situation". Each entry fills the form and says what it shows:
+
+| Situation | What it shows |
+|---|---|
+| A clear win | Both statistical reads agree: ship B. |
+| Checked every day (peeking) | 12 looks: the tool switches to an always-valid p-value. |
+| Broken traffic split | A split far off its plan: don't trust the test yet. |
+| Too early to tell | Three days, too little evidence: keep testing. |
+| Small-sample trap | A huge lift on 60 visitors a version. |
+| Too small to matter | 200,000 visitors a version and a difference inside the band that matters: stop. |
+| The new version is worse | A losing test: keep A. |
+| Rare conversions (about 1%) | Low rates need far more visitors for the same relative lift. |
+| Cookie Cats, 1-day and 7-day retention | A public mobile-game test read on two outcomes. |
+
+Counts are illustrative except Cookie Cats. To add a situation, append an entry `{label, why, v}` to `EXAMPLES` in `docs/app.js`.
+
+## When to use it, and when not
+
+Use it to decide a finished or running A/B test on a yes-or-no outcome per visitor (signed up, bought, clicked, came back), to catch the common ways a test goes wrong (a broken split, peeking, too little data), or to size a test before it starts.
+
+| It assumes | If yours differs |
+|---|---|
+| The outcome is yes or no for each visitor: converted or not. | Revenue per visitor, order value or time on site are averages with long tails. Use a t-test or a bootstrap on the per-visitor values instead. |
+| Visitors are assigned at random, and the unit you count is the unit you assigned. | If you assign users but count page views or sessions, the counts are not independent and the intervals come out too narrow. Count users, or use the delta method for ratio metrics. |
+| Each visitor sees one version, and one visitor's version does not affect another's. | In marketplaces, social products or shared pricing, groups interfere. Those need cluster or switchback designs. |
+| Behaviour is stable over the test, apart from weekday patterns. | A new design often gets a novelty bump or a learning dip. Run whole weeks, and look at whether the lift fades over time before you trust it. |
+| You report every look at the results. | If you peeked more often than you enter, the evidence is weaker than the tool shows. |
+| Two versions in Analyze. | For three or more versions, compare each with A and use the planner's correction for several versions, or a multi-arm method. |
+
+Do not use it to choose the winner of a test that is allocating traffic adaptively (a bandit), for metrics that are not yes-or-no, or as a substitute for checking that the tracking itself is right.
+
+## Where it comes from, and how it was generalised
+
+The tool comes out of a set of experiments kept in this repository ([results/summary.md](https://github.com/omidgolchin/bayesian-ab-lab/blob/main/results/summary.md)):
+
+- **Peeking breaks both kinds of rule.** In 5,000 simulated tests with identical versions, checked up to 40 times, a plain p-value declared a false winner in 29.1% and a Bayesian expected-loss rule in 85.0%. So the tool asks how many times you looked, uses an always-valid p-value when you looked more than once, and ships only when the Bayesian and classic reads agree.
+- **A real test, read both ways.** In Cookie Cats, a public mobile-game test, moving the first gate from level 30 to 40 lowered 7-day retention by 0.82 points; both reads agree. It is one of the situations.
+- **Adaptive allocation** (Thompson sampling) earned more conversions during a simulated test but reached a confident, correct read less often (52.5% against 65.2%). The tool reads fixed-split tests only.
+
+**How it was generalised.** The experiments fixed their rates, sample sizes and number of looks. The tool takes your counts, looks, test length and the smallest lift worth acting on, and adds the checks that catch broken tests: the traffic split, too few conversions, part weeks and "no meaningful difference". The experiments also checked whether language models can read an A/B result; that part did not become part of the tool, and its AI fill only reads your notes into the form.
 
 ## Research notes
 

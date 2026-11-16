@@ -2,6 +2,9 @@
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
+  function openDetails(id) { var d = document.getElementById(id); if (d && d.tagName === "DETAILS") { d.open = true; d.scrollIntoView({ block: "start" }); var su = d.querySelector("summary"); if (su) su.focus(); } }
+  document.querySelectorAll("a.open-details").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); openDetails(a.getAttribute("href").slice(1)); }); });
+  if (location.hash === "#fit" || location.hash === "#origin") openDetails(location.hash.slice(1));
   var F = Tool.fmt;
 
   var DEFAULTS = {
@@ -10,14 +13,19 @@
     shipProb: 95, lossFrac: 10, prior: "flat", alpha: 5,
     pRate: 4.2, pMde: 5, pMdeUnit: "rel", pTraffic: 20000, pVersions: 2, pPower: 0.8, pAlpha: 5
   };
+  /* Common situations. Counts are illustrative except the two Cookie Cats rows (a public mobile-game
+     test). To add one, append {label, why, v} with the form fields to set. */
   var EXAMPLES = [
-    { label: "A clear win", v: { nA: 10000, xA: 420, nB: 10000, xB: 498, checks: 1, days: 14, share: 50, mde: 5, mdeUnit: "rel", value: 40 } },
-    { label: "Checked every day (peeking)", v: { nA: 6200, xA: 250, nB: 6150, xB: 302, checks: 12, days: 12, share: 50, mde: 10, mdeUnit: "rel", value: "" } },
-    { label: "Broken traffic split", v: { nA: 10480, xA: 440, nB: 9520, xB: 455, checks: 1, days: 14, share: 50, mde: 5, mdeUnit: "rel", value: "" } },
-    { label: "Too early to tell", v: { nA: 1200, xA: 50, nB: 1180, xB: 58, checks: 1, days: 3, share: 50, mde: 5, mdeUnit: "rel", value: "" } },
-    { label: "Small-sample trap", v: { nA: 60, xA: 6, nB: 58, xB: 11, checks: 1, days: 2, share: 50, mde: 10, mdeUnit: "rel", value: "" } },
-    { label: "Cookie Cats: gate at level 30 vs 40, 1-day retention", v: { nA: 44700, xA: 20034, nB: 45489, xB: 20119, checks: 1, days: "", share: 50, mde: 1, mdeUnit: "rel", value: "" } },
-    { label: "Cookie Cats: gate at level 30 vs 40, 7-day retention", v: { nA: 44700, xA: 8502, nB: 45489, xB: 8279, checks: 1, days: "", share: 50, mde: 2, mdeUnit: "rel", value: "" } }
+    { label: "A clear win", why: "10,000 visitors a version and B converts 4.98% against 4.20%. Both statistical reads agree, so the verdict can say ship.", v: { nA: 10000, xA: 420, nB: 10000, xB: 498, checks: 1, days: 14, share: 50, mde: 5, mdeUnit: "rel", value: 40 } },
+    { label: "Checked every day (peeking)", why: "Results were looked at 12 times. Every look is another chance for a plain p-value to be fooled, so the tool switches to one that stays valid however often you look.", v: { nA: 6200, xA: 250, nB: 6150, xB: 302, checks: 12, days: 12, share: 50, mde: 10, mdeUnit: "rel", value: "" } },
+    { label: "Broken traffic split", why: "A 50/50 test that sent 10,480 visitors to A and 9,520 to B. A gap that size almost always means a tracking or assignment bug, so the tool will not read the result.", v: { nA: 10480, xA: 440, nB: 9520, xB: 455, checks: 1, days: 14, share: 50, mde: 5, mdeUnit: "rel", value: "" } },
+    { label: "Too early to tell", why: "Three days and 1,200 visitors a version: not enough evidence either way, and short of a full week.", v: { nA: 1200, xA: 50, nB: 1180, xB: 58, checks: 1, days: 3, share: 50, mde: 5, mdeUnit: "rel", value: "" } },
+    { label: "Small-sample trap", why: "About 60 visitors a version. B's lift looks huge, but with this few conversions one or two visitors decide it.", v: { nA: 60, xA: 6, nB: 58, xB: 11, checks: 1, days: 2, share: 50, mde: 10, mdeUnit: "rel", value: "" } },
+    { label: "Too small to matter", why: "200,000 visitors a version and the rates differ by a hair. The question is no longer whether B differs but whether any difference is big enough to care about; here it is not, so stop the test.", v: { nA: 200000, xA: 8400, nB: 200000, xB: 8420, checks: 1, days: 28, share: 50, mde: 5, mdeUnit: "rel", value: "" } },
+    { label: "The new version is worse", why: "B converts less than A. A test can lose; the verdict says to keep A rather than to keep testing forever.", v: { nA: 12000, xA: 600, nB: 12000, xB: 516, checks: 1, days: 14, share: 50, mde: 5, mdeUnit: "rel", value: "" } },
+    { label: "Rare conversions (about 1%)", why: "Purchases at about 1% need far more visitors than sign-ups at 20% to show the same relative lift. Try Plan a test with a 1% rate to see how many.", v: { nA: 20000, xA: 200, nB: 20000, xB: 236, checks: 1, days: 14, share: 50, mde: 10, mdeUnit: "rel", value: "" } },
+    { label: "Cookie Cats: gate at level 30 vs 40, 1-day retention", why: "A public test from a mobile game: moving the first gate from level 30 to 40, read on players who returned the next day.", v: { nA: 44700, xA: 20034, nB: 45489, xB: 20119, checks: 1, days: "", share: 50, mde: 1, mdeUnit: "rel", value: "" } },
+    { label: "Cookie Cats: gate at level 30 vs 40, 7-day retention", why: "The same game read on players who returned a week later.", v: { nA: 44700, xA: 8502, nB: 45489, xB: 8279, checks: 1, days: "", share: 50, mde: 2, mdeUnit: "rel", value: "" } }
   ];
   var PLAN_EX_FIRST = "Busy checkout: 20,000 visitors a day at 4.2%";
   var IDS_A = ["nA", "xA", "nB", "xB", "checks", "days", "share", "mde", "mdeUnit", "value", "shipProb", "lossFrac", "prior", "alpha"];
@@ -36,7 +44,7 @@
     var ex = EXAMPLES[+this.value];
     setInputs(ex.v);
     document.querySelectorAll(".field.filled").forEach(function (f) { f.classList.remove("filled"); });
-    Tool.exampleWatch($("f-analyze"), "<b>" + ex.label + "</b>. Type your own counts over it; the verdict updates as you type.");
+    Tool.exampleWatch($("f-analyze"), "<b>" + ex.label + ".</b> " + (ex.why || "") + " Type your own counts over it; the verdict updates as you type.");
     this.value = ""; runAnalyze();
   });
   var q0 = new URLSearchParams(location.search);

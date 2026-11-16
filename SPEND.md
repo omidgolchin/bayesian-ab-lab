@@ -31,3 +31,4 @@ Nemotron-3.5-Super-VL $0.15 / $0.50; Ripple-65B-Preview $0.20 / $0.60;
 Muse-Glimmer-30B $0.35 / $1.50; Inkling-2-Small $0.30 / $1.00.
 
 2026-11-16: structural-variation restructure (table-strip layout, traffic-light badge, bottom glossary) — $0.00 API spend.
+- 2026-11-16: guide sections (start here, situations, when to use, where it comes from) — $0.00 API spend; all work local.

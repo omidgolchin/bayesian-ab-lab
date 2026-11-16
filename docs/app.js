@@ -19,6 +19,7 @@
     { label: "Cookie Cats: gate at level 30 vs 40, 1-day retention", v: { nA: 44700, xA: 20034, nB: 45489, xB: 20119, checks: 1, days: "", share: 50, mde: 1, mdeUnit: "rel", value: "" } },
     { label: "Cookie Cats: gate at level 30 vs 40, 7-day retention", v: { nA: 44700, xA: 8502, nB: 45489, xB: 8279, checks: 1, days: "", share: 50, mde: 2, mdeUnit: "rel", value: "" } }
   ];
+  var PLAN_EX_FIRST = "Busy checkout: 20,000 visitors a day at 4.2%";
   var IDS_A = ["nA", "xA", "nB", "xB", "checks", "days", "share", "mde", "mdeUnit", "value", "shipProb", "lossFrac", "prior", "alpha"];
   var IDS_P = ["pRate", "pMde", "pMdeUnit", "pTraffic", "pVersions", "pPower", "pAlpha"];
   var state = Tool.readParams(DEFAULTS);
@@ -32,10 +33,16 @@
   EXAMPLES.forEach(function (ex, i) { var o = document.createElement("option"); o.value = i; o.textContent = ex.label; $("example").appendChild(o); });
   $("example").addEventListener("change", function () {
     if (this.value === "") return;
-    setInputs(EXAMPLES[+this.value].v);
+    var ex = EXAMPLES[+this.value];
+    setInputs(ex.v);
     document.querySelectorAll(".field.filled").forEach(function (f) { f.classList.remove("filled"); });
+    Tool.exampleWatch($("f-analyze"), "<b>" + ex.label + "</b>. Type your own counts over it; the verdict updates as you type.");
     this.value = ""; runAnalyze();
   });
+  var q0 = new URLSearchParams(location.search);
+  function fromUrl(ids) { return ids.some(function (k) { return q0.has(k); }); }
+  if (!fromUrl(IDS_A)) Tool.exampleWatch($("f-analyze"), "<b>A clear win</b>: 10,000 visitors per version. Type your own counts over it; the verdict updates as you type.");
+  if (!fromUrl(IDS_P)) Tool.exampleWatch($("f-plan"), "<b>" + PLAN_EX_FIRST + "</b>. Type your own rate and traffic over it.");
   IDS_A.forEach(function (id) { $(id).addEventListener("input", debounce(runAnalyze, 120)); $(id).addEventListener("change", runAnalyze); });
   IDS_P.forEach(function (id) { $(id).addEventListener("input", debounce(runPlan, 120)); $(id).addEventListener("change", runPlan); });
   function setMode(m) {
@@ -84,17 +91,17 @@
       shipProb: num("shipProb"), lossFrac: num("lossFrac"), prior: $("prior").value, alpha: num("alpha") };
     var ok = true;
     function need(id, cond, msg) { var bad = !cond; fieldError(id, bad ? msg : ""); if (bad) ok = false; }
-    need("nA", v.nA > 0 && Number.isInteger(v.nA), "Whole number above 0.");
-    need("nB", v.nB > 0 && Number.isInteger(v.nB), "Whole number above 0.");
-    need("xA", v.xA !== null && v.xA >= 0 && Number.isInteger(v.xA) && (v.nA === null || v.xA <= v.nA), "Between 0 and the visitors.");
-    need("xB", v.xB !== null && v.xB >= 0 && Number.isInteger(v.xB) && (v.nB === null || v.xB <= v.nB), "Between 0 and the visitors.");
-    need("share", v.share > 0 && v.share < 100, "Between 1 and 99.");
-    need("mde", v.mde > 0, "Above 0.");
-    need("checks", v.checks >= 1 && Number.isInteger(v.checks), "1 or more.");
-    need("shipProb", v.shipProb >= 50 && v.shipProb < 100, "50 to 99.9.");
-    need("lossFrac", v.lossFrac > 0 && v.lossFrac <= 100, "1 to 100.");
-    need("alpha", v.alpha > 0 && v.alpha < 50, "0.1 to 20.");
-    fieldError("days", v.days !== null && v.days < 0 ? "0 or more." : "");
+    need("nA", v.nA > 0 && Number.isInteger(v.nA), "Enter how many visitors saw A, as a whole number such as 10000.");
+    need("nB", v.nB > 0 && Number.isInteger(v.nB), "Enter how many visitors saw B, as a whole number such as 10000.");
+    need("xA", v.xA !== null && v.xA >= 0 && Number.isInteger(v.xA) && (v.nA === null || v.xA <= v.nA), "Enter A's conversions as a whole number, no more than A's visitors.");
+    need("xB", v.xB !== null && v.xB >= 0 && Number.isInteger(v.xB) && (v.nB === null || v.xB <= v.nB), "Enter B's conversions as a whole number, no more than B's visitors.");
+    need("share", v.share > 0 && v.share < 100, "Enter the planned share of traffic for B, from 1 to 99. Use 50 for an even split.");
+    need("mde", v.mde > 0, "Enter the smallest lift worth acting on, above 0, such as 5.");
+    need("checks", v.checks >= 1 && Number.isInteger(v.checks), "Enter how many times you looked at the results, as a whole number. Use 1 if you looked once.");
+    need("shipProb", v.shipProb >= 50 && v.shipProb < 100, "Enter a percentage from 50 to 99.9, such as 95.");
+    need("lossFrac", v.lossFrac > 0 && v.lossFrac <= 100, "Enter a percentage from 1 to 100, such as 10.");
+    need("alpha", v.alpha >= 0.1 && v.alpha <= 20, "Enter a percentage from 0.1 to 20, such as 5.");
+    fieldError("days", v.days !== null && v.days < 0 ? "Enter the days it has run, 0 or more, or leave it empty." : "");
     if (v.xA !== null && v.nA && v.xA === 0 && v.xB === 0) { fieldError("xA", "Need at least one conversion overall."); ok = false; }
     return ok ? v : null;
   }
@@ -308,6 +315,7 @@
     if (this.value === "") return;
     var ex = PLAN_EX[+this.value]; this.value = "";
     Object.keys(ex.v).forEach(function (k) { $(k).value = ex.v[k]; });
+    Tool.exampleWatch($("f-plan"), "<b>" + ex.label + "</b>. Type your own rate and traffic over it.");
     runPlan();
   });
   function runPlan() {
@@ -315,10 +323,10 @@
       pVersions: Number($("pVersions").value), pPower: Number($("pPower").value), pAlpha: num("pAlpha") };
     var ok = true;
     function need(id, cond, msg) { fieldError(id, cond ? "" : msg); if (!cond) ok = false; }
-    need("pRate", v.pRate > 0 && v.pRate < 100, "Between 0 and 100.");
-    need("pMde", v.pMde > 0, "Above 0.");
-    need("pTraffic", v.pTraffic > 0, "Above 0.");
-    need("pAlpha", v.pAlpha > 0 && v.pAlpha < 50, "0.1 to 20.");
+    need("pRate", v.pRate > 0 && v.pRate < 100, "Enter today's conversion rate as a percentage above 0 and below 100, such as 4.2.");
+    need("pMde", v.pMde > 0, "Enter the smallest lift worth detecting, above 0, such as 5.");
+    need("pTraffic", v.pTraffic > 0, "Enter the visitors per day who would enter the test, above 0.");
+    need("pAlpha", v.pAlpha >= 0.1 && v.pAlpha <= 20, "Enter a percentage from 0.1 to 20, such as 5.");
     var urlState = { mode: "plan" }; IDS_P.forEach(function (k) { urlState[k] = $(k).value; });
     Tool.writeParams(urlState);
     if (!ok) { $("pTitle").textContent = "Check the highlighted inputs"; $("pBody").textContent = ""; $("pKpis").innerHTML = ""; $("checksP").innerHTML = ""; return; }

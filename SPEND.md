@@ -29,3 +29,5 @@ gpt-oss-120b $0.15 / $0.60; Qwen3.5-9B $0.17 / $0.25;
 DeepSeek-V4.1-Flash $0.30 / $1.20; qwen-2-1.5b-instruct $0.10 / $0.10;
 Nemotron-3.5-Super-VL $0.15 / $0.50; Ripple-65B-Preview $0.20 / $0.60;
 Muse-Glimmer-30B $0.35 / $1.50; Inkling-2-Small $0.30 / $1.00.
+
+2026-11-16: structural-variation restructure (table-strip layout, traffic-light badge, bottom glossary) — $0.00 API spend.

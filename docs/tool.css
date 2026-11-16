@@ -143,3 +143,58 @@ select.example { font-size: var(--fs-small); }
 .jump { display: none; }
 @media (max-width: 820px) { .jump { display: inline-flex; align-items: center; min-height: 44px; margin: 0 0 var(--sp-2); font-size: var(--fs-small); font-weight: 600; } }
 .ctl-grid .ctl-hint { display: block; margin-top: 4px; font-weight: 400; }
+
+/* ---- this tool's own structure: table-strip inputs, chart | decision
+ * results, traffic-light badge, bottom glossary. Kit files untouched.
+ * Brand drifts for this tool (two): rounder corners (--radius 10px)
+ * and a more compact density (tighter panel padding and gaps). ---- */
+:root { --radius: 10px; }
+.panel { padding: var(--sp-3); }
+.work { gap: var(--sp-3); }
+.work.stack { grid-template-columns: minmax(0, 1fr); }
+
+.mode-intro { color: var(--muted); font-size: var(--fs-small); line-height: 1.5; max-width: 78ch; margin: var(--sp-3) 0 0; }
+.mode-intro b { color: var(--fg); font-weight: 600; }
+.panel-head .sub { color: var(--muted); font-weight: 400; font-size: var(--fs-small); }
+
+/* Input strip: one row per version */
+.strip { width: 100%; border-collapse: collapse; }
+.strip th, .strip td { text-align: left; padding: 6px 8px; vertical-align: top; }
+.strip thead th { font-size: var(--fs-caption); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+.strip tbody th[scope="row"] { font-weight: 600; white-space: nowrap; padding-top: 13px; }
+.strip tbody tr + tr th, .strip tbody tr + tr td { border-top: 1px solid var(--border); }
+.strip .field input { width: 100%; font-size: var(--fs-body); padding: 7px 9px; font-variant-numeric: tabular-nums; }
+.strip-note { font-size: var(--fs-caption); color: var(--muted); margin: var(--sp-2) 0 0; line-height: 1.45; }
+.strip-settings { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-3); margin-top: var(--sp-4); border-top: 1px solid var(--border); padding-top: var(--sp-3); }
+.strip-settings .field.wide { grid-column: span 2; }
+@media (max-width: 900px) { .strip-settings { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) {
+  .strip-settings { grid-template-columns: minmax(0, 1fr); }
+  .strip-settings .field.wide { grid-column: auto; }
+  .strip thead { display: none; }
+  .strip, .strip tbody, .strip tr, .strip td { display: block; width: 100%; }
+  .strip tbody th[scope="row"] { display: block; padding-bottom: 0; }
+  .strip td { padding: 4px 8px; }
+  .strip td::before { content: attr(data-label); display: block; font-size: var(--fs-caption); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+}
+
+/* Results: charts left, decision right */
+.results { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--sp-3); align-items: start; margin-top: var(--sp-4); }
+.results-charts { display: grid; gap: var(--sp-3); }
+@media (max-width: 820px) { .results { grid-template-columns: minmax(0, 1fr); } }
+
+/* Traffic-light badge beside the chart, atop the decision column */
+.v-top { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); }
+.tl-badge { display: inline-flex; align-items: center; gap: 7px; font-size: var(--fs-small); font-weight: 700; line-height: 1.2; border: 1.5px solid var(--neutral); color: var(--muted); border-radius: 999px; padding: 3px 12px 3px 9px; white-space: nowrap; }
+.tl-badge .tl-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--neutral); flex: 0 0 auto; }
+.tl-badge.is-good { color: var(--good); border-color: var(--good); }
+.tl-badge.is-good .tl-dot { background: var(--good); }
+.tl-badge.is-warn { color: var(--series-2); border-color: var(--series-2); }
+.tl-badge.is-warn .tl-dot { background: var(--series-2); }
+.tl-badge.is-bad { color: var(--bad); border-color: var(--bad); }
+.tl-badge.is-bad .tl-dot { background: var(--bad); }
+
+/* Glossary at the bottom of the page */
+.glossary-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--sp-3) var(--sp-5); margin: 0; }
+.g-item dt { font-weight: 600; font-size: var(--fs-small); }
+.g-item dd { margin: 2px 0 0; font-size: var(--fs-small); color: var(--muted); line-height: 1.5; }

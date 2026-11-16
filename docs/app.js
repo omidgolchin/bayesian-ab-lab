@@ -110,7 +110,7 @@
     Object.assign(state, v || {}); state.mode = "analyze";
     var urlState = {}; IDS_A.forEach(function (k) { urlState[k] = $(k).value; }); urlState.mode = "analyze";
     Tool.writeParams(urlState);
-    if (!v) { $("vTitle").textContent = "Check the highlighted inputs"; $("vBody").textContent = ""; $("verdict").className = "panel verdict v-neutral"; $("kpis").innerHTML = ""; $("checksA").innerHTML = ""; return; }
+    if (!v) { $("vTitle").textContent = "Check the highlighted inputs"; $("vBody").textContent = ""; $("verdict").className = "panel verdict v-neutral"; $("tlBadge").className = "tl-badge is-neutral"; $("tlText").textContent = "Check inputs"; $("kpis").innerHTML = ""; $("checksA").innerHTML = ""; return; }
     var rateA = v.xA / v.nA, rateB = v.xB / v.nB;
     var base = rateA > 0 && rateA < 1 ? rateA : (v.xA + v.xB) / (v.nA + v.nB);
     var mdeAbs = v.mdeUnit === "rel" ? base * v.mde / 100 : v.mde / 100;
@@ -164,6 +164,8 @@
     }
     $("vTitle").textContent = title; $("vBody").textContent = body;
     $("verdict").className = "panel verdict v-" + cls;
+    var badge = { srm: ["is-bad", "Stop: fix the split"], ship_b: ["is-good", "Ship B"], keep_a: ["is-good", "Keep A"], equivalent: ["is-bad", "Stop"] }[d.state] || ["is-warn", "Keep testing"];
+    $("tlBadge").className = "tl-badge " + badge[0]; $("tlText").textContent = badge[1];
     L.title = title; L.body = body;
   }
   function lossWords(x) { return 100 * x < 0.001 ? "almost nothing (under 0.001 points)" : "about " + (100 * x).toFixed(3) + " points"; }
@@ -374,7 +376,7 @@
     return ["A/B test plan: " + P.title, P.body, "", "Checks: " + P.checks.map(function (c) { return c[2].toLowerCase(); }).join(", "), "", "Open this plan: " + location.href].join("\n");
   }
 
-  Tool.explain({
+  var GLOSSARY = {
     lift: { t: "Lift: relative or points", d: "Two ways to say how much better B is. If A converts at 4.0% and B at 4.4%, the difference is 0.4 <i>points</i>, which is a 10% <i>relative</i> lift (0.4 ÷ 4.0). Pick whichever your team uses; the tool converts between them." },
     points: { t: "Difference in points", d: "B's conversion rate minus A's, in percentage points. 4.4% − 4.0% = +0.4 points." },
     peeking: { t: "Why the number of looks matters", d: "A classic p-value assumes you read the result once. If you check daily and stop the first time it dips below 5%, the real chance of a false win climbs: in this repository's simulation of two identical versions, 29% after 40 looks. The verdict states the figure for your own number of looks. With more than one look the tool switches to an <i>always-valid</i> p-value, which stays honest however often you check." },
@@ -391,7 +393,14 @@
     posterior: { t: "Posterior", d: "What the data say each version's true conversion rate could be, as a probability curve: Bayes' rule combines your prior belief with the counts. Tall and narrow means the rate is pinned down; wide means it is still uncertain." },
     credible: { t: "Credible interval", d: "The Bayesian counterpart of a confidence interval: given the data (and the prior), there is a 95% probability the true difference lies inside it. With a flat prior and this much data it is usually almost the same as the classic 95% interval." },
     weeks: { t: "Why whole weeks", d: "Visitors on weekends often behave differently from weekdays. Ending mid-week over-weights some days, so the run is rounded up to whole weeks." }
-  });
+  };
+  Tool.explain(GLOSSARY);
+  (function () {
+    var host = $("glossaryList"); if (!host) return;
+    host.innerHTML = Object.keys(GLOSSARY).map(function (k) {
+      return '<div class="g-item"><dt>' + GLOSSARY[k].t + "</dt><dd>" + GLOSSARY[k].d + "</dd></div>";
+    }).join("");
+  })();
 
   setMode(state.mode === "plan" ? "plan" : "analyze");
 })();

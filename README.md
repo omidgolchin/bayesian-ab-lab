@@ -4,7 +4,7 @@ For anyone who has run an A/B test and has to decide what to do next: enter visi
 
 ![The tool on four examples (a clear win, a test checked every day, a broken traffic split, a small-sample trap), a plain-language explanation opened from a ? button, and the test planner](docs/hero.gif)
 
-![The A/B Test Decision Tool on a desktop: the three-step guide, the inputs with a hint under each, and the verdict with its checks](docs/screenshots/desktop.png)
+![The A/B Test Decision Tool on a desktop: the counts in a table strip across the top, the charts on the left, and the decision with its traffic-light badge and checks on the right](docs/screenshots/desktop.png)
 
 **Use it:** https://omidgolchin.github.io/bayesian-ab-lab/ (runs in your browser; nothing you type leaves it)
 
@@ -14,7 +14,7 @@ For anyone who has run an A/B test and has to decide what to do next: enter visi
 - **Plan a test.** Your conversion rate, the smallest lift worth detecting and your daily traffic give the visitors per version and a run length in whole weeks, with a chart of what a longer test buys.
 - **Fill from my notes.** Paste a dashboard export or a Slack thread; a language model (your key, or copy the prompt into any assistant) fills the form, showing the phrase each number came from. The model never sees or produces the verdict.
 - **Copy summary / Copy link.** A plain-text summary for Slack or email, and a link that reopens the tool with the same numbers.
-- **Help where you need it.** Each mode opens with three steps saying what to enter and what you get; every input has a line under it saying what the number is, why it matters and where to find it; and every technical term in the inputs and results has a **?** that opens a plain-language explanation.
+- **Help where you need it.** Each mode opens with a line saying what to enter and what you get; every input is labelled with what the number is, why it matters and where to find it; every technical term in the inputs and results has a **?** that opens a plain-language explanation; and a glossary at the bottom of the page gathers the terms in one place.
 
 ## Built-in checks
 

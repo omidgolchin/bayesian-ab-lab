@@ -134,3 +134,14 @@ was taken and logged here; nothing waited on a human checkpoint.
 - Equivalence (TOST, 90% interval inside +/- the smallest worthwhile lift) gives a "stop" verdict.
 - Loss tolerance default: 10% of the smallest worthwhile lift, so the tolerance scales with the conversion rate instead of a fixed 0.2 points (which was meaningless for low-rate pages).
 - AI assist: input side only, visitor's own key or copy-the-prompt; values whose quote is not found in the pasted text are left unticked.
+
+## 2026-11-18: what a screen reader announces
+
+- Only the verdict title is announced. The whole verdict panel used to
+  be one `aria-live` region, and its KPI tiles and checks are rewritten
+  on every run, so a screen reader read them all again after each pause
+  in typing. Now the title alone carries `aria-live="polite"` and
+  `aria-atomic="true"`: a changed verdict is announced in full, and the
+  KPIs and checks stay on the page for the reader to move to. The title
+  is written only when its text changes, so an unchanged verdict is not
+  read out again.

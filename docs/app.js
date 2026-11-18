@@ -2,6 +2,10 @@
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
+  /* Live regions (the verdict title) are written only when their text
+   * changes, so a screen reader does not announce an unchanged verdict
+   * again after every pause in typing. */
+  var setLive = function (el, s) { s = String(s); if (el.textContent !== s) el.textContent = s; };
   function openDetails(id) { var d = document.getElementById(id); if (d && d.tagName === "DETAILS") { d.open = true; d.scrollIntoView({ block: "start" }); var su = d.querySelector("summary"); if (su) su.focus(); } }
   document.querySelectorAll("a.open-details").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); openDetails(a.getAttribute("href").slice(1)); }); });
   if (location.hash === "#fit" || location.hash === "#origin") openDetails(location.hash.slice(1));
@@ -118,7 +122,7 @@
     Object.assign(state, v || {}); state.mode = "analyze";
     var urlState = {}; IDS_A.forEach(function (k) { urlState[k] = $(k).value; }); urlState.mode = "analyze";
     Tool.writeParams(urlState);
-    if (!v) { $("vTitle").textContent = "Check the highlighted inputs"; $("vBody").textContent = ""; $("verdict").className = "panel verdict v-neutral"; $("tlBadge").className = "tl-badge is-neutral"; $("tlText").textContent = "Check inputs"; $("kpis").innerHTML = ""; $("checksA").innerHTML = ""; return; }
+    if (!v) { setLive($("vTitle"), "Check the highlighted inputs"); $("vBody").textContent = ""; $("verdict").className = "panel verdict v-neutral"; $("tlBadge").className = "tl-badge is-neutral"; $("tlText").textContent = "Check inputs"; $("kpis").innerHTML = ""; $("checksA").innerHTML = ""; return; }
     var rateA = v.xA / v.nA, rateB = v.xB / v.nB;
     var base = rateA > 0 && rateA < 1 ? rateA : (v.xA + v.xB) / (v.nA + v.nB);
     var mdeAbs = v.mdeUnit === "rel" ? base * v.mde / 100 : v.mde / 100;
@@ -170,7 +174,7 @@
       }
       if (d.small) body = "Too little data to trust any read: one version has fewer than 10 conversions (or non-conversions). " + body;
     }
-    $("vTitle").textContent = title; $("vBody").textContent = body;
+    setLive($("vTitle"), title); $("vBody").textContent = body;
     $("verdict").className = "panel verdict v-" + cls;
     var badge = { srm: ["is-bad", "Stop: fix the split"], ship_b: ["is-good", "Ship B"], keep_a: ["is-good", "Keep A"], equivalent: ["is-bad", "Stop"] }[d.state] || ["is-warn", "Keep testing"];
     $("tlBadge").className = "tl-badge " + badge[0]; $("tlText").textContent = badge[1];
@@ -339,14 +343,14 @@
     need("pAlpha", v.pAlpha >= 0.1 && v.pAlpha <= 20, "Enter a percentage from 0.1 to 20, such as 5.");
     var urlState = { mode: "plan" }; IDS_P.forEach(function (k) { urlState[k] = $(k).value; });
     Tool.writeParams(urlState);
-    if (!ok) { $("pTitle").textContent = "Check the highlighted inputs"; $("pBody").textContent = ""; $("pKpis").innerHTML = ""; $("checksP").innerHTML = ""; return; }
+    if (!ok) { setLive($("pTitle"), "Check the highlighted inputs"); $("pBody").textContent = ""; $("pKpis").innerHTML = ""; $("checksP").innerHTML = ""; return; }
     var p1 = v.pRate / 100, mdeAbs = v.pMdeUnit === "rel" ? p1 * v.pMde / 100 : v.pMde / 100;
     if (p1 + mdeAbs >= 1) { fieldError("pMde", "Lift takes the rate above 100%."); return; }
     var n = Decide.sampleSizePerArm(p1, mdeAbs, v.pAlpha / 100, v.pPower, v.pVersions);
     var total = n * v.pVersions, days = total / v.pTraffic, weeks = Math.max(1, Math.ceil(days / 7));
     var mdeWeeks = Decide.detectableLift(p1, Math.floor(weeks * 7 * v.pTraffic / v.pVersions), v.pAlpha / 100, v.pPower, v.pVersions);
     lastPlan = { v: v, n: n, total: total, days: days, weeks: weeks, mdeAbs: mdeAbs, p1: p1 };
-    $("pTitle").textContent = F.int(n) + " visitors per version";
+    setLive($("pTitle"), F.int(n) + " visitors per version");
     $("pBody").textContent = "To see " + F.pct(p1, 2) + " move to " + F.pct(p1 + mdeAbs, 2) + ": " + F.int(total) + " visitors in total: about " + Math.ceil(days) + " day" + (Math.ceil(days) === 1 ? "" : "s") + " at " + F.int(v.pTraffic) + " a day. Run it for " + weeks + " full week" + (weeks === 1 ? "" : "s") + " (" + weeks * 7 + " days), and read the result once at the end." + (weeks * 7 > days * 1.15 ? " Running the full weeks also lets you detect a lift as small as " + (v.pMdeUnit === "rel" ? (100 * mdeWeeks / p1).toFixed(1) + "% relative." : (100 * mdeWeeks).toFixed(2) + " points.") : "");
     lastPlan.title = $("pTitle").textContent; lastPlan.body = $("pBody").textContent;
     $("pKpis").innerHTML = [

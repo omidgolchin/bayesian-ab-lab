@@ -91,9 +91,9 @@
         </section>
       </div>
       <div class="results-decision">
-        <section class="panel verdict" id="verdict" aria-live="polite">
+        <section class="panel verdict" id="verdict">
           <div class="v-top"><p class="v-kicker">Verdict</p><span class="tl-badge is-neutral" id="tlBadge"><span class="tl-dot"></span><span id="tlText">…</span></span></div>
-          <p class="v-title" id="vTitle">…</p>
+          <p class="v-title" id="vTitle" aria-live="polite" aria-atomic="true">…</p>
           <p class="v-body" id="vBody"></p>
           <div class="kpis" id="kpis"></div>
           <div class="checks" id="checksA" aria-label="Built-in checks"></div>
@@ -164,9 +164,9 @@ d = rate_B − rate_A,  V = its variance,  τ = smallest lift worth acting on (p
         </div>
       </form>
       <div>
-        <section class="panel verdict v-accent" id="pVerdict" aria-live="polite">
+        <section class="panel verdict v-accent" id="pVerdict">
           <p class="v-kicker">Plan</p>
-          <p class="v-title" id="pTitle">…</p>
+          <p class="v-title" id="pTitle" aria-live="polite" aria-atomic="true">…</p>
           <p class="v-body" id="pBody"></p>
           <div class="kpis" id="pKpis"></div>
           <div class="checks" id="checksP"></div>
